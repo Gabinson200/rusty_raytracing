@@ -1,6 +1,10 @@
 // utils.rs
 
 pub mod prelude {
+
+    //Random
+    use rand::Rng;
+
     // Types
     pub use crate::vec3::{Color, Point3, Vec3};
     pub use crate::ray::Ray;
@@ -21,6 +25,23 @@ pub mod prelude {
     // Common functions
     #[inline]
     pub fn degrees_to_radians(degrees: f64) -> f64 {
-        degrees * PI / 180.0
+        return degrees * PI / 180.0;
     }
+
+    // Random number functions
+
+    // Random number in [0,1)
+    #[inline]
+    pub fn random_f64() -> f64 {
+        let random_float: f64 = rand::random::<f64>();
+        //eprintln!("Random f64: {}", random_float);
+        return random_float;
+    }
+
+    // Random number in [min,max)
+    #[inline]
+    pub fn random_f64_range(min: f64, max: f64) -> f64 {
+        return min + (max - min) * random_f64();
+    }
+
 }

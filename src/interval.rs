@@ -36,6 +36,17 @@ impl Interval {
     pub fn is_empty(&self) -> bool {
         self.min > self.max
     }
+
+    pub fn clamp(&self, x: f64) -> f64 {
+        if x < self.min {
+            self.min
+        } else if x > self.max {
+            self.max
+        } else {
+            x
+        }
+    }
+    
 }
 
 impl Default for Interval {
