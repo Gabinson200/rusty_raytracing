@@ -2,6 +2,7 @@
 
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
+use crate::interval::Interval;
 
 #[derive(Clone, Copy, Debug)]
 pub struct HitRecord {
@@ -28,7 +29,7 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, r:&Ray, t_min:f64, t_max:f64, rec:&mut HitRecord) -> bool{
+    fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool{
         println!("Hittable hit called on not implemented object");
         return false
     }

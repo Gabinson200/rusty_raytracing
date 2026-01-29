@@ -8,5 +8,7 @@ pub mod hittable;
 pub mod sphere;
 pub mod hittable_list;
 pub mod utils;
+pub mod interval;
+pub mod camera;
 
 pub use crate::utils::prelude::*;

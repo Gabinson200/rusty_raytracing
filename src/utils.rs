@@ -9,9 +9,13 @@ pub mod prelude {
     pub use crate::hittable::{HitRecord, Hittable};
     pub use crate::sphere::Sphere;
     pub use crate::hittable_list::HittableList;
+    pub use crate::interval::Interval;
+
+    // Camera
+    pub use crate::camera::Camera;
 
     // Common constants
-    pub const INFINITY: f64 = f64::INFINITY;
+    // not needed pub const INFINITY: f64 = f64::INFINITY;
     pub const PI: f64 = std::f64::consts::PI;
 
     // Common functions
