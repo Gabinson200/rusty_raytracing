@@ -21,7 +21,7 @@ pub mod prelude {
     pub use crate::camera::Camera;
 
     // Materials
-    pub use crate::material::{Material, Lambertian, Metal};
+    pub use crate::material::{Material, Lambertian, Metal, Dielectric};
 
     // Common constants
     // not needed pub const INFINITY: f64 = f64::INFINITY;

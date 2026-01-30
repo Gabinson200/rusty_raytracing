@@ -84,8 +84,34 @@ impl Vec3 {
     }
 
     #[inline]
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3::new(
+                random_f64_range(-1.0, 1.0),
+                random_f64_range(-1.0, 1.0),
+                0.0,
+            );
+
+            // Rejection sampling: keep points uniformly sampled in the square [-1,1]×[-1,1]
+            // and accept only those whose squared radius is < 1 (inside the unit disk).
+            if p.length().powi(2) < 1.0 {
+                return p;
+            }
+        }
+    }
+
+
+    #[inline]
     pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
         v - n * 2.0 * v.dot(n)
+    }
+
+    #[inline]
+    pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta: f64 = (-*uv).dot(*n).min(1.0);
+        let r_out_perp: Vec3 = (*uv + *n * cos_theta) * etai_over_etat;
+        let r_out_parallel: Vec3 = *n * -(1.0 - r_out_perp.length().powi(2)).abs().sqrt();
+        return r_out_perp + r_out_parallel;
     }
 
 
