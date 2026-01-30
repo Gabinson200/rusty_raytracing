@@ -10,9 +10,7 @@ pub struct HittableList {
 
 impl HittableList {
     pub fn new() -> HittableList {
-        HittableList {
-            objects: Vec::new(),
-        }
+        HittableList { objects: Vec::new() }
     }
 
     pub fn add(&mut self, object: Box<dyn Hittable>) {
@@ -35,7 +33,7 @@ impl Hittable for HittableList {
             if object.hit(r, Interval::new(ray_t.min, closest_so_far), &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                *rec = temp_rec;
+                *rec = temp_rec.clone(); // clone but cheap
             }
         }
 

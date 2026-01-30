@@ -1,13 +1,17 @@
 // hittable.rs
 
-use crate::ray::Ray;
-use crate::vec3::{Point3, Vec3};
-use crate::interval::Interval;
+use std::sync::Arc;
 
-#[derive(Clone, Copy, Debug)]
+use crate::ray::Ray;
+use crate::vec3::{Point3, Vec3, Color};
+use crate::interval::Interval;
+use crate::material::{Material, Lambertian, Metal};
+
+#[derive(Clone)]
 pub struct HitRecord {
     pub p:Point3,
     pub normal:Vec3,
+    pub material: Arc<dyn Material>,
     pub t:f64,
     pub front_face:bool,
 }
@@ -17,6 +21,7 @@ impl HitRecord {
         Self {
             p: Point3::init_zero(),
             normal: Vec3::init_zero(),
+            material: Arc::new(Lambertian::new(Color::new(0.0,0.0,0.0))),
             t: 0.0,
             front_face: true,
         }
@@ -29,8 +34,5 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool{
-        println!("Hittable hit called on not implemented object");
-        return false
-    }
+    fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool;
 }

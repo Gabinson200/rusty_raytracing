@@ -6,11 +6,13 @@ use crate::ray::Ray;
 use crate::hittable::{Hittable, HitRecord};
 use crate::interval::Interval;
 use crate::utils::prelude::random_f64;
+use crate::material::Material;
 
 pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: u32,
     pub samples_per_pixel: u32,
+    pub max_depth: u32,
 
     image_height: u32,
     center: Point3,
@@ -27,7 +29,8 @@ impl Camera {
             aspect_ratio: 16.0 / 9.0,
             image_width: 400,
             image_height: 0,
-            samples_per_pixel: 100,
+            samples_per_pixel: 50,
+            max_depth: 50,
             center: Point3::init_zero(),
             pixel_origin: Point3::init_zero(),
             pixel_delta_u: Vec3::init_zero(),
@@ -50,7 +53,7 @@ impl Camera {
                 let mut pixel_color = Color::init_zero();
                 for sample in 0..self.samples_per_pixel {
                     let r: Ray = self.get_ray(i, j);
-                    pixel_color = pixel_color + self.ray_color(&r, world);
+                    pixel_color = pixel_color + self.ray_color(&r, self.max_depth, world);
                 }
                 
                 Color::write_color(pixel_color * self.pixel_samples_scale);
@@ -113,11 +116,22 @@ impl Camera {
         return Ray::new(ray_origin, ray_direction);
     }
 
-    fn ray_color(&self, r: &Ray, world: &impl Hittable) -> Color {
+    fn ray_color(&self, r: &Ray, max_depth: u32, world: &impl Hittable) -> Color {
+        if max_depth <= 0 {
+            return Color::init_zero();
+        }
+
         let mut rec = HitRecord::new();
 
-        if(world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec)) {
-            return (rec.normal + Color::new(1.0, 1.0, 1.0)) / 2.0;
+        // Check for ray-object intersection make sure that t is >0.001 to avoid shadow acne
+        if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
+            let mut ray = Ray::new(Point3::init_zero(), Vec3::init_zero());
+            let mut attenuation = Color::init_zero();
+            if rec.material.scatter(r, &rec, &mut attenuation, &mut ray) {
+                return attenuation * self.ray_color(&ray, max_depth-1, world);
+            }else{
+                return Color::init_zero();
+            }
         }
 
         let unit_direction: Vec3 = r.direction().unit_vector();

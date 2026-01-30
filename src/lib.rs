@@ -10,5 +10,6 @@ pub mod hittable_list;
 pub mod utils;
 pub mod interval;
 pub mod camera;
+pub mod material;
 
 pub use crate::utils::prelude::*;

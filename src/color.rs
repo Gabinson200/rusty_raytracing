@@ -3,10 +3,23 @@ use crate::interval::Interval;
 
 impl Color{
 
+    #[inline]
+    fn linear_to_gamma(linear_component: f64) -> f64{
+        if linear_component > 0.0 {
+            return linear_component.sqrt();
+        }
+        return 0.0;
+    }
+
     pub fn write_color(pixel_color: Color) {
-        let r = pixel_color.x();
-        let g = pixel_color.y();
-        let b = pixel_color.z();
+        let mut r = pixel_color.x();
+        let mut g = pixel_color.y();
+        let mut b = pixel_color.z();
+
+        // Apply gamma correction with gamma=2.0
+        let r = Color::linear_to_gamma(r);
+        let g = Color::linear_to_gamma(g);
+        let b = Color::linear_to_gamma(b);
 
         // Translate thh [0,1] range to [0,255]
         let intensity:Interval = Interval::new(0.000, 0.999);
@@ -18,5 +31,3 @@ impl Color{
 
 
 }
-
-// talking ot grandma gimme a sec

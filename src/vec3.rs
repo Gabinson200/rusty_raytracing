@@ -1,6 +1,6 @@
 // vec3.rs
 use std::ops::{Add, Sub, Mul, Div, Neg};
-
+use crate::utils::prelude::{random_f64, random_f64_range};
 
 // 3D vector struct used to define points and colors
 #[derive(Copy, Clone, Debug)]
@@ -51,12 +51,57 @@ impl Vec3 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
+    pub fn near_zero(&self) -> bool {
+        let s = f64::MIN;
+        (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
+    }
+
+    #[inline]
     pub fn unit_vector(&self) -> Vec3 {
-        let length = self.length();
+        *self / self.length()
+    }
+
+    // horrible function to generate random unit vector
+    #[inline]
+    pub fn random_unit_vector() -> Vec3{
+        loop{
+            let p = Vec3::random_range(-1.0, 1.0);
+            let lensqp = p.length().powi(2);
+            if f64::MIN < lensqp && lensqp <= 1.0 { 
+                return p / lensqp.sqrt();
+            }
+        }
+    }
+
+    #[inline]
+    pub fn random_on_hemisphere(normal: Vec3) -> Vec3 {
+        let on_unit_sphere = Vec3::random_unit_vector();
+        if on_unit_sphere.dot(normal) > 0.0 {
+            on_unit_sphere
+        } else {
+            -on_unit_sphere
+        }
+    }
+
+    #[inline]
+    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+        v - n * 2.0 * v.dot(n)
+    }
+
+
+    pub fn random() -> Vec3 {
         Vec3 {
-            x: self.x / length,
-            y: self.y / length,
-            z: self.z / length,
+            x: random_f64(),
+            y: random_f64(),
+            z: random_f64(),
+        }
+    }
+
+    pub fn random_range(min: f64, max: f64) -> Vec3 {
+        Vec3 {
+            x: random_f64_range(min, max),
+            y: random_f64_range(min, max),
+            z: random_f64_range(min, max),
         }
     }
 
@@ -97,6 +142,20 @@ impl Sub for Vec3 {
         }
     }
 }
+
+//element-wise multiplication
+impl Mul for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
+
 
 // Scalar multiplication for any scalar type that can convert into f64
 // Note: only Vec3 * scalar and not the other way around (kinda dumb but whatever)

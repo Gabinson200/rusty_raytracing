@@ -5,6 +5,8 @@ pub mod prelude {
     //Random
     use rand::Rng;
 
+    use std::sync::Arc;
+
     // Types
     pub use crate::vec3::{Color, Point3, Vec3};
     pub use crate::ray::Ray;
@@ -17,6 +19,9 @@ pub mod prelude {
 
     // Camera
     pub use crate::camera::Camera;
+
+    // Materials
+    pub use crate::material::{Material, Lambertian, Metal};
 
     // Common constants
     // not needed pub const INFINITY: f64 = f64::INFINITY;
