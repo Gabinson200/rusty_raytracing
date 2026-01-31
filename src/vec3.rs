@@ -51,6 +51,12 @@ impl Vec3 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
+    #[inline]
+    pub fn length_squared(&self) -> f64 {
+        self.x*self.x + self.y*self.y + self.z*self.z
+    }
+
+
     pub fn near_zero(&self) -> bool {
         let s = f64::MIN;
         (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
@@ -66,7 +72,7 @@ impl Vec3 {
     pub fn random_unit_vector() -> Vec3{
         loop{
             let p = Vec3::random_range(-1.0, 1.0);
-            let lensqp = p.length().powi(2);
+            let lensqp = p.length_squared();
             if f64::MIN < lensqp && lensqp <= 1.0 { 
                 return p / lensqp.sqrt();
             }
@@ -94,7 +100,7 @@ impl Vec3 {
 
             // Rejection sampling: keep points uniformly sampled in the square [-1,1]×[-1,1]
             // and accept only those whose squared radius is < 1 (inside the unit disk).
-            if p.length().powi(2) < 1.0 {
+            if p.length_squared() < 1.0 {
                 return p;
             }
         }
@@ -110,7 +116,7 @@ impl Vec3 {
     pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
         let cos_theta: f64 = (-*uv).dot(*n).min(1.0);
         let r_out_perp: Vec3 = (*uv + *n * cos_theta) * etai_over_etat;
-        let r_out_parallel: Vec3 = *n * -(1.0 - r_out_perp.length().powi(2)).abs().sqrt();
+        let r_out_parallel: Vec3 = *n * -(1.0 - r_out_perp.length_squared()).abs().sqrt();
         return r_out_perp + r_out_parallel;
     }
 
