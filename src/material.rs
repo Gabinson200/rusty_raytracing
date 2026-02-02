@@ -1,9 +1,9 @@
 // material.rs
 
-use crate::vec3::{Color, Vec3, Point3};
+use crate::vec3::{Color, Vec3};
 use crate::hittable::{HitRecord};
 use crate::ray::Ray;
-use crate::utils::prelude::{random_f64, random_f64_range};
+use crate::utils::prelude::{random_f64};
 
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool{
@@ -66,7 +66,7 @@ impl Material for Lambertian {
             scatter_direction = rec.normal;
         }
 
-        *scattered = Ray::new(rec.p, scatter_direction);
+        *scattered = Ray::new_time(rec.p, scatter_direction, r_in.time());
         *attenuation = self.albedo;
         return true;
     }
@@ -78,7 +78,7 @@ impl Material for Metal {
         let mut reflected = Vec3::reflect(r_in.direction(), rec.normal);
         // Add fuzziness to the reflection
         reflected = reflected.unit_vector() + (Vec3::random_unit_vector() * self.fuzz);
-        *scattered = Ray::new(rec.p, reflected);
+        *scattered = Ray::new_time(rec.p, reflected, r_in.time());
         *attenuation = self.albedo;
         return scattered.direction().dot(rec.normal) > 0.0;
     }
@@ -97,13 +97,13 @@ impl Material for Dielectric {
         let cannot_refract = refraction_index * sin_theta > 1.0;
         let mut direction = Vec3::new(0.0, 0.0, 0.0);
 
-        if (cannot_refract || self.reflectance(cos_theta, refraction_index) > random_f64()) {
+        if cannot_refract || self.reflectance(cos_theta, refraction_index) > random_f64() {
             direction = Vec3::reflect(unit_direction, rec.normal);
         }else{
             direction = Vec3::refract(&unit_direction, &rec.normal, refraction_index);
         }
        
-        *scattered = Ray::new(rec.p, direction);
+        *scattered = Ray::new_time(rec.p, direction, r_in.time());
         return true;
     }
 }

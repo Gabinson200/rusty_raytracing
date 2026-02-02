@@ -3,13 +3,13 @@
 pub mod prelude {
 
     //Random
-    use rand::Rng;
+    //use rand::Rng;
 
-    use std::sync::Arc;
+    //use std::sync::Arc;
 
     // Types
     pub use crate::vec3::{Color, Point3, Vec3};
-    pub use crate::ray::Ray;
+    pub use crate::ray::{Ray, point_to_ray};
 
     // Hittables
     pub use crate::hittable::{HitRecord, Hittable};

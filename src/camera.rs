@@ -80,7 +80,7 @@ impl Camera {
             io::stdout().flush().unwrap();
             for i in 0..self.image_width {
                 let mut pixel_color = Color::init_zero();
-                for sample in 0..self.samples_per_pixel {
+                for _sample in 0..self.samples_per_pixel {
                     let r: Ray = self.get_ray(i, j);
                     pixel_color = pixel_color + self.ray_color(&r, self.max_depth, world);
                 }
@@ -158,9 +158,10 @@ impl Camera {
         let pixel_sample: Point3 = self.pixel_origin
             + (self.pixel_delta_u * (i as f64 + offset.x()))
             + (self.pixel_delta_v * (j as f64 + offset.y()));
-        let ray_origin = if self.defocus_angle <= 0.0 {self.center} else {self.defocus_disk_sample()};
-        let ray_direction = pixel_sample - ray_origin;
-        return Ray::new(ray_origin, ray_direction);
+        let ray_origin: Point3 = if self.defocus_angle <= 0.0 {self.center} else {self.defocus_disk_sample()};
+        let ray_direction: Vec3 = pixel_sample - ray_origin;
+        let ray_time = random_f64();
+        return Ray::new_time(ray_origin, ray_direction, ray_time);
     }
 
     fn ray_color(&self, r: &Ray, max_depth: u32, world: &impl Hittable) -> Color {

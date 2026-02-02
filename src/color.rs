@@ -12,9 +12,9 @@ impl Color{
     }
 
     pub fn write_color(pixel_color: Color) {
-        let mut r = pixel_color.x();
-        let mut g = pixel_color.y();
-        let mut b = pixel_color.z();
+        let r = pixel_color.x();
+        let g = pixel_color.y();
+        let b = pixel_color.z();
 
         // Apply gamma correction with gamma=2.0
         let r = Color::linear_to_gamma(r);
