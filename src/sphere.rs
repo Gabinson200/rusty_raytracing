@@ -43,9 +43,6 @@ impl Sphere {
         &self.material
     }
 
-    pub fn bounding_box(&self) -> AABB {
-        self.bbox
-    }
 
 }
 
@@ -81,5 +78,10 @@ impl Hittable for Sphere {
         rec.material = Arc::clone(&self.material);
 
         return true;
+    }
+
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox
     }
 }

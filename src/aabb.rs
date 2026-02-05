@@ -1,6 +1,6 @@
 // aabb.rs
 
-// Axis-Aligned Bounding Box (AABB) implementation
+// Axis-Aligned Bounding Box (AABB) implementation (more or less good enough)
 
 use crate::vec3::{Point3, Vec3};
 use crate::interval::Interval;
@@ -43,11 +43,11 @@ impl AABB {
         }
     }
 
-    pub fn axis_interval(&self, n: i32) -> Interval {
+    pub fn axis_interval(&self, n: i32) -> &Interval {
         match n {
-            0 => self.x,
-            1 => self.y,
-            2 => self.z,
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
             _ => panic!("Axis index out of bounds"),
         }
     }
@@ -71,7 +71,7 @@ impl AABB {
         let ray_dir:Vec3 = r.direction();
 
         for axis in 0..3{
-            let axis_interval: Interval = self.axis_interval(axis);
+            let axis_interval: &Interval = self.axis_interval(axis);
             let adinV: f64 = 1.0 / ray_dir[axis as usize];
 
             // compute t0 and t1 for the slabs
@@ -89,12 +89,7 @@ impl AABB {
             if ray_t.max <= ray_t.min{
                 return false;
             }
-
         }
-
         return true;
-    }
-        
+    }    
 }
-
-
