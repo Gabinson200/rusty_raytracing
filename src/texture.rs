@@ -11,6 +11,7 @@ pub trait Texture{
 
 // Solid color texture
 
+#[derive(Copy, Clone, Debug)]
 pub struct SolidColor{
     albedo: Color
 }
@@ -34,6 +35,7 @@ impl Texture for SolidColor{
 
 // Checker texture
 
+#[derive(Clone)]
 pub struct CheckerTexture{
     inv_scale: f64,
     even: Arc<dyn Texture>,

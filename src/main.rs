@@ -4,7 +4,7 @@ use std::sync::Arc;
 // Import modules
 use rusty_raytracing::utils::prelude::*;
 
-fn main() {
+fn bouncing_spheres() {
 
     // World
     let mut world = HittableList::new();
@@ -75,3 +75,40 @@ fn main() {
     //eprintln!("Image dimensions: {}x{}\n", camera.image_width, camera.image_height);
 }
 
+
+fn checkered_sphere(){
+    // World
+    let mut world = HittableList::new();
+
+    let checker = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    world.add(Box::new(Sphere::new(Ray::new(Point3::new(0.0, -10.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 10.0, Arc::new(Lambertian::from_texture(Arc::new(checker.clone()))))));
+    world.add(Box::new(Sphere::new(Ray::new(Point3::new(0.0, 10.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 10.0, Arc::new(Lambertian::from_texture(Arc::new(checker.clone()))))));
+
+    // Camera
+    let mut camera = Camera::new();
+
+    camera.aspect_ratio = 16.0 / 9.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 100;
+    camera.max_depth = 50;
+
+    camera.vfov = 20.0;
+    camera.look_from = Point3::new(13.0, 2.0, 3.0);
+    camera.look_at = Point3::new(0.0, 0.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0; // degrees
+
+    //camera.render(&world);
+    camera.render(&world);
+}
+
+fn main() {
+    let option = 2;
+
+    match option {
+        1 => bouncing_spheres(),
+        2 => checkered_sphere(),
+        _ => println!("Invalid option"),
+    }
+}
