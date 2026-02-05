@@ -3,22 +3,44 @@
 use crate::hittable::{Hittable, HitRecord};
 use crate::ray::Ray;
 use crate::interval::Interval;
+use crate::aabb::AABB;
+use std::sync::Arc;
+
+pub type HittablePtr = Arc<dyn Hittable>;
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable>>,
+    objects: Vec<HittablePtr>,
+    bbox: Option<AABB>,
 }
 
 impl HittableList {
     pub fn new() -> HittableList {
-        HittableList { objects: Vec::new() }
+        HittableList { objects: Vec::new(), bbox: None }
     }
 
+    // take Box<dyn Hittable> but internally store Arc
     pub fn add(&mut self, object: Box<dyn Hittable>) {
-        self.objects.push(object);
+        let obj: HittablePtr = Arc::from(object);
+
+        self.bbox = Some(match self.bbox {
+            None => obj.bounding_box(),
+            Some(b) => AABB::from_two_boxes(b, obj.bounding_box()),
+        });
+
+        self.objects.push(obj);
     }
 
     pub fn clear(&mut self) {
         self.objects.clear();
+        self.bbox = None;
+    }
+
+    pub fn bounding_box(&self) -> Option<AABB> {
+        self.bbox
+    }
+
+    pub fn objects(&self) -> &Vec<HittablePtr> {
+        &self.objects
     }
 }
 

@@ -50,13 +50,16 @@ fn main() {
     let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
     world.add(Box::new(Sphere::new(Ray::new(Point3::new(4.0, 1.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 1.0, material3)));
 
+
+    let bvh_root = BVHNode::new(&world);
+
     // Camera
     let mut camera = Camera::new();
 
     camera.aspect_ratio = 16.0 / 9.0;
     camera.image_width = 400;
-    camera.samples_per_pixel = 100;
-    camera.max_depth = 50;
+    camera.samples_per_pixel = 30;
+    camera.max_depth = 10;
     camera.vfov = 20.0;
     camera.look_from = Point3::new(13.0, 2.0, 3.0);
     camera.look_at = Point3::new(0.0, 0.0, 0.0);
@@ -65,7 +68,8 @@ fn main() {
     camera.defocus_angle = 0.6; // degrees
     camera.focus_distance = 10.0;
 
-    camera.render(&world);
+    //camera.render(&world);
+    camera.render(&bvh_root);
 
     //eprintln!("Image dimensions: {}x{}\n", camera.image_width, camera.image_height);
 }

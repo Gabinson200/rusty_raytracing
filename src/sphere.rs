@@ -5,17 +5,31 @@ use crate::hittable::{Hittable, HitRecord};
 use crate::interval::Interval;
 use crate::material::Material;
 use std::sync::Arc;
+use crate::aabb::AABB;
+
+
 
 pub struct Sphere {
     center: Ray, // if stationary ray direction is all zeros
     radius: f64,
     material: Arc<dyn Material>,
+    bbox: AABB,
 }
 
 impl Sphere {
     pub fn new(center: Ray, radius: f64, material: Arc<dyn Material>) -> Self {
-        Sphere { center, radius, material }
+        let rvec = Point3::new(radius, radius, radius);
+        let bbox1 = AABB::extrema_box(center.origin() - rvec, center.origin() + rvec);
+
+        // if the sphere is moving, extend the bounding box to include the position at time=1.0
+        if center.direction() != Vec3::init_zero() {
+            let bbox2 = AABB::extrema_box(center.at(1.0) - rvec, center.at(1.0) + rvec);
+            let bbox_combined = AABB::from_two_boxes(bbox1, bbox2);
+            return Sphere { center, radius, material, bbox: bbox_combined };
+        }
+        Sphere { center, radius, material, bbox: bbox1 }
     }
+
 
     pub fn center(&self) -> Ray {
         self.center
@@ -27,6 +41,10 @@ impl Sphere {
 
     pub fn material(&self) -> &Arc<dyn Material> {
         &self.material
+    }
+
+    pub fn bounding_box(&self) -> AABB {
+        self.bbox
     }
 
 }

@@ -17,6 +17,9 @@ pub mod prelude {
     pub use crate::hittable_list::HittableList;
     pub use crate::interval::Interval;
 
+    //BVH
+    pub use crate::bvh::BVHNode;
+
     // Camera
     pub use crate::camera::Camera;
 
@@ -42,6 +45,23 @@ pub mod prelude {
         //eprintln!("Random f64: {}", random_float);
         return random_float;
     }
+
+    #[inline]
+    pub fn random_i32() -> i32 {
+        let random_int: i32 = rand::random::<i32>();
+        return random_int;
+    }
+
+    // Random number in [min,max]
+    #[inline]
+    pub fn random_i32_range(min: i32, max: i32) -> i32 {
+        debug_assert!(max > min);
+
+        let span = (max - min) as u32;
+        let r = rand::random::<u32>() % span;
+        min + (r as i32)
+    }
+
 
     // Random number in [min,max)
     #[inline]

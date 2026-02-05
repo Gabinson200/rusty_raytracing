@@ -1,9 +1,9 @@
 // vec3.rs
-use std::ops::{Add, Sub, Mul, Div, Neg};
+use std::ops::{Add, Sub, Mul, Div, Neg, Index, IndexMut};
 use crate::utils::prelude::{random_f64, random_f64_range};
 
 // 3D vector struct used to define points and colors
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Vec3 {
     x: f64,
     y: f64,
@@ -240,6 +240,30 @@ where T: Into<f64> + Copy,
     }
 }
 
+// indexing for Vec3
 
+impl Index<usize> for Vec3 {
+    type Output = f64;
 
+    #[inline]
+    fn index(&self, i: usize) -> &Self::Output {
+        match i {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Vec3 index out of bounds: {}", i),
+        }
+    }
+}
 
+impl IndexMut<usize> for Vec3 {
+    #[inline]
+    fn index_mut(&mut self, i: usize) -> &mut Self::Output {
+        match i {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Vec3 index out of bounds: {}", i),
+        }
+    }
+}
