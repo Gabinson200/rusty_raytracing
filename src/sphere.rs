@@ -43,7 +43,6 @@ impl Sphere {
         &self.material
     }
 
-
 }
 
 impl Hittable for Sphere {
@@ -79,7 +78,6 @@ impl Hittable for Sphere {
 
         return true;
     }
-
 
     fn bounding_box(&self) -> AABB {
         self.bbox

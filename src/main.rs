@@ -10,8 +10,9 @@ fn main() {
     let mut world = HittableList::new();
 
     // Ground
-    let material_ground = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.add(Box::new(Sphere::new(Ray::new(Point3::new(0.0, -1000.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 1000.0, material_ground)));
+    //let material_ground = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    let checkered_ground_texture = Arc::new(CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)));
+    world.add(Box::new(Sphere::new(Ray::new(Point3::new(0.0, -1000.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 1000.0, Arc::new(Lambertian::from_texture(checkered_ground_texture)))));
 
     // Spheres
     for a in -11..11 {

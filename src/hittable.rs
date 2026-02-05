@@ -16,6 +16,8 @@ pub struct HitRecord {
     pub material: Arc<dyn Material>,
     pub t:f64,
     pub front_face:bool,
+    pub u: f64,
+    pub v: f64,
 }
 
 impl HitRecord {
@@ -26,6 +28,8 @@ impl HitRecord {
             material: Arc::new(Lambertian::new(Color::new(0.0,0.0,0.0))),
             t: 0.0,
             front_face: true,
+            u: 0.0,
+            v: 0.0,
         }
     }
 

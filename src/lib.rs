@@ -13,5 +13,6 @@ pub mod camera;
 pub mod material;
 pub mod aabb;
 pub mod bvh;
+pub mod texture;
 
 pub use crate::utils::prelude::*;

@@ -4,6 +4,9 @@ use crate::vec3::{Color, Vec3};
 use crate::hittable::{HitRecord};
 use crate::ray::Ray;
 use crate::utils::prelude::{random_f64};
+use crate::texture::{Texture, SolidColor, CheckerTexture};
+use std::sync::Arc;
+
 
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool{
@@ -14,12 +17,16 @@ pub trait Material {
 
 // Lambertian diffuse material
 pub struct Lambertian {
-    albedo: Color
+    texture: Arc<dyn Texture>,
 }
 
 impl Lambertian {
     pub fn new(albedo: Color) -> Self {
-        Self { albedo }
+        Self {texture: Arc::new(SolidColor::new(albedo)) }
+    }
+
+    pub fn from_texture(texture: Arc<dyn Texture>) -> Self {
+        Self {texture: texture}
     }
 }
 
@@ -67,7 +74,7 @@ impl Material for Lambertian {
         }
 
         *scattered = Ray::new_time(rec.p, scatter_direction, r_in.time());
-        *attenuation = self.albedo;
+        *attenuation = self.texture.value(rec.u, rec.v, &rec.p);
         return true;
     }
 }

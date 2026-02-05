@@ -20,6 +20,9 @@ pub mod prelude {
     //BVH
     pub use crate::bvh::BVHNode;
 
+    // Textures
+    pub use crate::texture::{Texture, SolidColor, CheckerTexture};
+
     // Camera
     pub use crate::camera::Camera;
 
