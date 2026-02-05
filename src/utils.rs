@@ -21,13 +21,16 @@ pub mod prelude {
     pub use crate::bvh::BVHNode;
 
     // Textures
-    pub use crate::texture::{Texture, SolidColor, CheckerTexture};
+    pub use crate::texture::{Texture, SolidColor, CheckerTexture, ImageTexture};
 
     // Camera
     pub use crate::camera::Camera;
 
     // Materials
     pub use crate::material::{Material, Lambertian, Metal, Dielectric};
+
+    // Image textures
+    pub use crate::image_loader::ImageTextureData;
 
     // Common constants
     // not needed pub const INFINITY: f64 = f64::INFINITY;

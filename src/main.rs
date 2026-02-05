@@ -103,12 +103,43 @@ fn checkered_sphere(){
     camera.render(&world);
 }
 
+fn earth(){
+    // World
+    let mut world = HittableList::new();
+
+    let earth_texture: Arc<dyn Texture> = Arc::new(ImageTexture::new("textures/earthmap.jpg"));
+    let earth_surface = Arc::new(Lambertian::from_texture(earth_texture));
+    let globe = Sphere::new(Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 2.0, earth_surface);
+    world.add(Box::new(globe));
+
+    
+    // Camera
+    let mut camera = Camera::new();
+
+    camera.aspect_ratio = 16.0 / 9.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 100;
+    camera.max_depth = 50;
+
+    camera.vfov = 20.0;
+    camera.look_from = Point3::new(0.0, 0.0, 12.0);
+    camera.look_at = Point3::new(0.0, 0.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0; // degrees
+
+    //camera.render(&world);
+    camera.render(&world);
+}
+
+
 fn main() {
-    let option = 2;
+    let option = 3;
 
     match option {
         1 => bouncing_spheres(),
         2 => checkered_sphere(),
+        3 => earth(),
         _ => println!("Invalid option"),
     }
 }

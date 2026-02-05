@@ -14,5 +14,6 @@ pub mod material;
 pub mod aabb;
 pub mod bvh;
 pub mod texture;
+pub mod image_loader;
 
 pub use crate::utils::prelude::*;

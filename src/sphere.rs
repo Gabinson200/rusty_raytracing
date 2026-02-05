@@ -43,6 +43,15 @@ impl Sphere {
         &self.material
     }
 
+    #[inline]
+    fn get_sphere_uv(p: &Point3) -> (f64, f64) {
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + std::f64::consts::PI;
+        let u = phi / (2.0 * std::f64::consts::PI);
+        let v = theta / std::f64::consts::PI;
+        (u, v)
+    }
+
 }
 
 impl Hittable for Sphere {
@@ -74,6 +83,9 @@ impl Hittable for Sphere {
         rec.p = ray.at(rec.t);
         let outward_normal:Vec3 = (rec.p - current_center) / self.radius;
         rec.set_face_normal(&ray, outward_normal);
+        let (u, v) = Sphere::get_sphere_uv(&outward_normal);
+        rec.u = u;
+        rec.v = v;
         rec.material = Arc::clone(&self.material);
 
         return true;
