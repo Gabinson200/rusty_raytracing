@@ -21,6 +21,9 @@ pub mod prelude {
     //BVH
     pub use crate::bvh::BVHNode;
 
+    //TRansformations
+    pub use crate::hittable::{Translate, RotateY};
+
     // Textures
     pub use crate::texture::{Texture, SolidColor, CheckerTexture, ImageTexture, NoiseTexture};
 

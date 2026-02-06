@@ -269,9 +269,16 @@ fn conrell_box(){
     world.add(Box::new(Quad::new(Point3::new(0.0, 0.0, 555.0), Vec3::new(555.0, 0.0, 0.0), Vec3::new(0.0, 555.0, 0.0), white.clone()))); // back
 
     // add boxes
-    
-    world.add(Box::new(Quad::make_box(&Point3::new(130.0, 0.0, 65.0), &Point3::new(295.0, 165.0, 230.0), white.clone())));
-    world.add(Box::new(Quad::make_box(&Point3::new(265.0, 0.0, 295.0), &Point3::new(430.0, 330.0, 460.0), white.clone())));
+    let mut box1 = Quad::make_box(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
+    let box1 = RotateY::new(Arc::new(box1), 15.0);
+    let box1 = Translate::new(Arc::new(box1), Vec3::new(265.0, 0.0, 295.0));
+
+    let mut box2 = Quad::make_box(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
+    let box2 = RotateY::new(Arc::new(box2), -18.0);
+    let box2 = Translate::new(Arc::new(box2), Vec3::new(130.0, 0.0, 65.0));
+
+    world.add(Box::new(box1));
+    world.add(Box::new(box2));
 
     // Camera
     let mut camera = Camera::new();
