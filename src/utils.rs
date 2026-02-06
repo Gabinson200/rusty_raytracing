@@ -21,7 +21,7 @@ pub mod prelude {
     pub use crate::bvh::BVHNode;
 
     // Textures
-    pub use crate::texture::{Texture, SolidColor, CheckerTexture, ImageTexture};
+    pub use crate::texture::{Texture, SolidColor, CheckerTexture, ImageTexture, NoiseTexture};
 
     // Camera
     pub use crate::camera::Camera;

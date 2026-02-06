@@ -133,13 +133,46 @@ fn earth(){
 }
 
 
+fn perlin_sphere(){
+    // World
+    let mut world = HittableList::new();
+
+    let perlin_texture: Arc<dyn Texture> = Arc::new(NoiseTexture::new(4.0));
+    let perlin_surface = Arc::new(Lambertian::from_texture(perlin_texture));
+    let perlin_globe = Sphere::new(Ray::new(Point3::new(0.0, -1000.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 1000.0, perlin_surface.clone());
+    let perlin_sphere = Sphere::new(Ray::new(Point3::new(0.0, 2.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 2.0, perlin_surface.clone());
+    world.add(Box::new(perlin_globe));
+    world.add(Box::new(perlin_sphere));
+
+    
+    // Camera
+    let mut camera = Camera::new();
+
+    camera.aspect_ratio = 16.0 / 9.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 100;
+    camera.max_depth = 50;
+
+    camera.vfov = 20.0;
+    camera.look_from = Point3::new(13.0, 2.0, 3.0);
+    camera.look_at = Point3::new(0.0, 0.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0; // degrees
+
+    //camera.render(&world);
+    camera.render(&world);
+
+}
+
 fn main() {
-    let option = 3;
+    let option = 4;
 
     match option {
         1 => bouncing_spheres(),
         2 => checkered_sphere(),
         3 => earth(),
+        4 => perlin_sphere(),
         _ => println!("Invalid option"),
     }
 }

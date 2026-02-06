@@ -5,6 +5,7 @@ use std::sync::Arc;
 use crate::vec3::Color;
 use crate::vec3::Point3;
 use crate::image_loader::ImageTextureData;
+use crate::perlin::Perlin;
 
 pub trait Texture{
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;  
@@ -105,6 +106,28 @@ impl Texture for ImageTexture{
     }
 }
 
+// Noise texture
+
+pub struct NoiseTexture{
+    noise: Perlin,
+    scale: f64,
+}
+
+impl NoiseTexture{
+    pub fn new(scale: f64) -> Self {
+        NoiseTexture { noise: Perlin::new(), scale }
+    }
+}
+
+impl Texture for NoiseTexture{
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        let p = *p * 1.0;//self.scale;
+        let noise_value = self.noise.noise(&p);
+        //Color::new(1.0, 1.0, 1.0) * 0.5 *( 1.0 + noise_value)
+        //Color::new(1.0, 1.0, 1.0) * self.noise.turb(&p, 7)
+        Color::new(1.0, 1.0, 1.0) * 0.5 *(1.0 + (self.scale * p.z() + 10.0 * self.noise.turb(&p, 7)).sin())
+    }
+}
 
 
 
