@@ -57,10 +57,10 @@ fn bouncing_spheres() {
     // Camera
     let mut camera = Camera::new();
 
-    camera.aspect_ratio = 16.0 / 9.0;
-    camera.image_width = 400;
-    camera.samples_per_pixel = 50;
-    camera.max_depth = 20;
+    camera.aspect_ratio = 1.0;//16.0 / 9.0;
+    camera.image_width = 600; //400;
+    camera.samples_per_pixel = 200; //50;
+    camera.max_depth = 50;
     camera.vfov = 20.0;
     camera.look_from = Point3::new(13.0, 2.0, 3.0);
     camera.look_at = Point3::new(0.0, 0.0, 0.0);
@@ -68,6 +68,8 @@ fn bouncing_spheres() {
 
     camera.defocus_angle = 0.6; // degrees
     camera.focus_distance = 10.0;
+
+    camera.background_color = Color::new(0.7, 0.8, 1.0); // light blue background
 
     //camera.render(&world);
     camera.render(&bvh_root);
@@ -97,6 +99,8 @@ fn checkered_sphere(){
     camera.look_at = Point3::new(0.0, 0.0, 0.0);
     camera.vup = Vec3::new(0.0, 1.0, 0.0);
 
+    camera.background_color = Color::new(0.7, 0.8, 1.0);
+
     camera.defocus_angle = 0.0; // degrees
 
     //camera.render(&world);
@@ -125,6 +129,8 @@ fn earth(){
     camera.look_from = Point3::new(0.0, 0.0, 12.0);
     camera.look_at = Point3::new(0.0, 0.0, 0.0);
     camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.background_color = Color::new(0.7, 0.8, 1.0);
 
     camera.defocus_angle = 0.0; // degrees
 
@@ -159,6 +165,8 @@ fn perlin_sphere(){
     camera.vup = Vec3::new(0.0, 1.0, 0.0);
 
     camera.defocus_angle = 0.0; // degrees
+
+    camera.background_color = Color::new(0.7, 0.8, 1.0);
 
     //camera.render(&world);
     camera.render(&world);
@@ -195,6 +203,8 @@ fn quads(){
     camera.look_at = Point3::new(0.0, 0.0, -1.0);
     camera.vup = Vec3::new(0.0, 1.0, 0.0);
 
+    camera.background_color = Color::new(0.7, 0.8, 1.0);
+
     camera.defocus_angle = 0.0; // degrees
 
     //camera.render(&world);
@@ -202,8 +212,91 @@ fn quads(){
 
 }
 
+fn simple_light(){
+    // World
+    let mut world = HittableList::new();
+
+    let perlin_texture: Arc<dyn Texture> = Arc::new(NoiseTexture::new(4.0));
+    let perlin_surface = Arc::new(Lambertian::from_texture(perlin_texture));
+    let perlin_globe = Sphere::new(Ray::new(Point3::new(0.0, -1000.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 1000.0, perlin_surface.clone());
+    let perlin_sphere = Sphere::new(Ray::new(Point3::new(0.0, 2.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 2.0, perlin_surface.clone());
+    world.add(Box::new(perlin_globe));
+    world.add(Box::new(perlin_sphere));
+
+    let difflight = Arc::new(DiffuseLight::new(Color::new(4.0, 4.0, 4.0)));
+    world.add(Box::new(Quad::new(Point3::new(3.0, 1.0, -2.0), Vec3::new(2.0, 0.0, 0.0), Vec3::new(0.0, 2.0, 0.0), difflight.clone())));
+    
+    let sphere_light = Sphere::new(Ray::new(Point3::new(0.0, 7.0, 0.0), Vec3::new(0.0, 0.0, 0.0)), 2.0, difflight.clone());
+    world.add(Box::new(sphere_light));
+    
+    // Camera
+    let mut camera = Camera::new();
+
+    camera.aspect_ratio = 16.0 / 9.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 100;
+    camera.max_depth = 50;
+
+    camera.vfov = 20.0;
+    camera.look_from = Point3::new(26.0, 3.0, 6.0);
+    camera.look_at = Point3::new(0.0, 2.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0; // degrees
+
+    camera.background_color = Color::new(0.0, 0.0, 0.0);
+    //camera.background_color = Color::new(0.7, 0.8, 1.0);
+
+    //camera.render(&world);
+    camera.render(&world);
+}
+
+
+fn conrell_box(){
+    // World
+    let mut world = HittableList::new();
+
+    let red = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new(Color::new(15.0, 15.0, 15.0)));
+
+    world.add(Box::new(Quad::new(Point3::new(555.0, 0.0, 0.0), Vec3::new(0.0, 555.0, 0.0), Vec3::new(0.0, 0.0, 555.0), green))); // left
+    world.add(Box::new(Quad::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 555.0, 0.0), Vec3::new(0.0, 0.0, 555.0), red))); // right
+    world.add(Box::new(Quad::new(Point3::new(343.0, 554.0, 332.0), Vec3::new(-130.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -105.0), light))); // light
+    world.add(Box::new(Quad::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(555.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 555.0), white.clone()))); // floor
+    world.add(Box::new(Quad::new(Point3::new(555.0, 555.0, 555.0), Vec3::new(-555.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -555.0), white.clone()))); // floor
+    world.add(Box::new(Quad::new(Point3::new(0.0, 0.0, 555.0), Vec3::new(555.0, 0.0, 0.0), Vec3::new(0.0, 555.0, 0.0), white.clone()))); // back
+
+    // add boxes
+    
+    world.add(Box::new(Quad::make_box(&Point3::new(130.0, 0.0, 65.0), &Point3::new(295.0, 165.0, 230.0), white.clone())));
+    world.add(Box::new(Quad::make_box(&Point3::new(265.0, 0.0, 295.0), &Point3::new(430.0, 330.0, 460.0), white.clone())));
+
+    // Camera
+    let mut camera = Camera::new();
+
+    camera.aspect_ratio = 1.0;
+    camera.image_width = 600;
+    camera.samples_per_pixel = 200;
+    camera.max_depth = 50;
+
+    camera.vfov = 40.0;
+    camera.look_from = Point3::new(278.0, 278.0, -800.0);
+    camera.look_at = Point3::new(278.0, 278.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0; // degrees
+
+    camera.background_color = Color::new(0.0, 0.0, 0.0);
+    //camera.background_color = Color::new(0.7, 0.8, 1.0);
+
+    //camera.render(&world);
+    camera.render(&world);
+}
+
 fn main() {
-    let option = 5;
+    let option = 7;
 
     match option {
         1 => bouncing_spheres(),
@@ -211,6 +304,8 @@ fn main() {
         3 => earth(),
         4 => perlin_sphere(),
         5 => quads(),
+        6 => simple_light(),
+        7 => conrell_box(),
         _ => println!("Invalid option"),
     }
 }

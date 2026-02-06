@@ -1,5 +1,6 @@
 // camera.rs
 
+use std::f64::INFINITY;
 use std::io::{self, Write};
 use crate::vec3::{Point3, Vec3, Color};
 use crate::ray::Ray;
@@ -23,6 +24,7 @@ pub struct Camera {
     pub defocus_angle: f64, // defocus angle for depth of field effect
     pub focus_distance: f64, // focus distance for depth of field effect
 
+    pub background_color: Color, // Scene background color
     // Camera basis vectors
     u : Vec3,
     v: Vec3,
@@ -57,6 +59,7 @@ impl Camera {
             u: Vec3::init_zero(),
             v: Vec3::init_zero(),
             w: Vec3::init_zero(),
+            background_color: Color::new(0.5, 0.7, 1.0), // blueish hue
 
             center: Point3::init_zero(),
             pixel_origin: Point3::init_zero(),
@@ -171,6 +174,21 @@ impl Camera {
 
         let mut rec = HitRecord::new();
 
+        if !world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
+            return self.background_color;
+        }
+
+        let mut scattered = Ray::new(Point3::init_zero(), Vec3::init_zero());
+        let mut attentuation = Color::init_zero();
+        let mut color_from_emission = rec.material.emitted(rec.u, rec.v, &rec.p);
+
+        if !rec.material.scatter(r, &rec, &mut attentuation, &mut scattered) {
+            return color_from_emission;
+        }
+
+        let color_from_scatter = attentuation * self.ray_color(&scattered, max_depth - 1, world);
+        return color_from_emission + color_from_scatter;
+        /* 
         // Check for ray-object intersection make sure that t is >0.001 to avoid shadow acne
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
             let mut ray = Ray::new(Point3::init_zero(), Vec3::init_zero());
@@ -185,6 +203,7 @@ impl Camera {
         let unit_direction: Vec3 = r.direction().unit_vector();
         let a = (unit_direction.y() + 1.0) / 2.0;
         return Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a;
+        */
     }
 
 }

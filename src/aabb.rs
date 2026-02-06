@@ -63,6 +63,14 @@ impl AABB {
 
     }
 
+    pub fn shift(&self, delta: Vec3) -> Self {
+        AABB {
+            x: self.x.shift(delta.x()),
+            y: self.y.shift(delta.y()),
+            z: self.z.shift(delta.z()),
+        }
+    }
+
     pub fn axis_interval(&self, n: i32) -> &Interval {
         match n {
             0 => &self.x,

@@ -28,7 +28,7 @@ pub mod prelude {
     pub use crate::camera::Camera;
 
     // Materials
-    pub use crate::material::{Material, Lambertian, Metal, Dielectric};
+    pub use crate::material::{Material, Lambertian, Metal, Dielectric, DiffuseLight};
 
     // Image textures
     pub use crate::image_loader::ImageTextureData;

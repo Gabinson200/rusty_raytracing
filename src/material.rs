@@ -1,6 +1,6 @@
 // material.rs
 
-use crate::vec3::{Color, Vec3};
+use crate::vec3::{Color, Vec3, Point3};
 use crate::hittable::{HitRecord};
 use crate::ray::Ray;
 use crate::utils::prelude::{random_f64};
@@ -11,6 +11,10 @@ use std::sync::Arc;
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool{
         return false;
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        Color::init_zero()
     }
 }
 
@@ -112,5 +116,29 @@ impl Material for Dielectric {
        
         *scattered = Ray::new_time(rec.p, direction, r_in.time());
         return true;
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Arc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(c: Color) -> Self {
+        Self { emit: Arc::new(SolidColor::new(c)) }
+    }
+
+    pub fn from_texture(t: Arc<dyn Texture>) -> Self {
+        Self { emit: t }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, _r_in: &Ray, _rec: &HitRecord, _attenuation: &mut Color, _scattered: &mut Ray) -> bool {
+        false
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        self.emit.value(u, v, p)
     }
 }

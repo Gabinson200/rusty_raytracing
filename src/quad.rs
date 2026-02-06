@@ -5,6 +5,7 @@ use crate::vec3::{Point3, Vec3};
 use crate::material::Material;
 use crate::aabb::AABB;
 use crate::hittable::{Hittable, HitRecord};
+use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::ray::Ray;
 
@@ -40,9 +41,45 @@ impl Quad {
             return false;
         }
 
+        // for triangle {;
+        /* 
+        if alpha < 0.0 || beta < 0.0 || (alpha + beta) > 1.0 {
+            return false;
+        }
+        */
+
+        // for ellipses (:
+        /* 
+        if !unit_interval.contains(alpha) || !unit_interval.contains(beta) || (alpha*alpha + beta*beta).sqrt() > 1.0 {
+            return false;
+        }
+        */
+
         rec.u = alpha;
         rec.v = beta;
         return true;
+    }
+
+    #[inline]
+    pub fn make_box(a: &Point3, b: &Point3, material: Arc<dyn Material>) -> HittableList {
+        let mut sides = HittableList::new();
+
+        // two opposite vertices with min and max coordinates
+        let min = Point3::new(a.x().min(b.x()), a.y().min(b.y()), a.z().min(b.z()));
+        let max = Point3::new(a.x().max(b.x()), a.y().max(b.y()), a.z().max(b.z()));
+
+        let dx = Vec3::new(max.x() - min.x(), 0.0, 0.0);
+        let dy = Vec3::new(0.0, max.y() - min.y(), 0.0);
+        let dz = Vec3::new(0.0, 0.0, max.z() - min.z());
+
+        sides.add(Box::new(Quad::new(Point3::new(min.x(), min.y(), max.z()), dx, dy, material.clone()))); //front
+        sides.add(Box::new(Quad::new(Point3::new(max.x(), min.y(), max.z()), -dz, dy, material.clone()))); // right
+        sides.add(Box::new(Quad::new(Point3::new(max.x(), min.y(), min.z()), -dx, dy, material.clone()))); // back
+        sides.add(Box::new(Quad::new(Point3::new(min.x(), min.y(), min.z()), dz, dy, material.clone()))); // left
+        sides.add(Box::new(Quad::new(Point3::new(min.x(), max.y(), max.z()), dx, -dz, material.clone()))); // top
+        sides.add(Box::new(Quad::new(Point3::new(min.x(), min.y(), min.z()), dx, dz, material.clone()))); // bottom
+
+        return sides
     }
 }
 
