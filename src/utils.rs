@@ -16,6 +16,7 @@ pub mod prelude {
     pub use crate::sphere::Sphere;
     pub use crate::hittable_list::HittableList;
     pub use crate::interval::Interval;
+    pub use crate::quad::Quad;
 
     //BVH
     pub use crate::bvh::BVHNode;

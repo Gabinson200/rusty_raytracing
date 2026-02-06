@@ -16,5 +16,6 @@ pub mod bvh;
 pub mod texture;
 pub mod image_loader;
 pub mod perlin;
+pub mod quad;
 
 pub use crate::utils::prelude::*;

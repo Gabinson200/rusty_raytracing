@@ -23,24 +23,44 @@ impl AABB {
         }
     }
 
+    fn pad_to_minimum(&mut self){
+        let delta: f64 = 0.0001;
+        if self.x.size() < delta {
+            self.x = self.x.expand(delta);
+        }
+        if self.y.size() < delta {
+            self.y = self.y.expand(delta);
+        }
+        if self.z.size() < delta {
+            self.z = self.z.expand(delta);
+        }
+    }
+
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        AABB { x, y, z }
+        let mut aabb = AABB { x, y, z };
+        aabb.pad_to_minimum();
+        aabb
     }
 
     pub fn extrema_box(p1: Point3, p2: Point3) -> Self {
-        AABB {
+        let mut aabb = AABB {
             x: Interval::new(p1.x().min(p2.x()), p1.x().max(p2.x())),
             y: Interval::new(p1.y().min(p2.y()), p1.y().max(p2.y())),
             z: Interval::new(p1.z().min(p2.z()), p1.z().max(p2.z())),
-        }
+        };
+        aabb.pad_to_minimum();
+        aabb
     }
 
     pub fn from_two_boxes(box1: AABB, box2: AABB) -> Self {
-        AABB {
+        let mut aabb = AABB {
             x: Interval::interval(box1.x, box2.x),
             y: Interval::interval(box1.y, box2.y),
             z: Interval::interval(box1.z, box2.z),
-        }
+        };
+        aabb.pad_to_minimum();
+        aabb
+
     }
 
     pub fn axis_interval(&self, n: i32) -> &Interval {
