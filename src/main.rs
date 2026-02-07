@@ -1,4 +1,3 @@
-use std::io::{self, Write};
 use std::sync::Arc;
 
 // Import modules
@@ -57,7 +56,7 @@ fn bouncing_spheres() {
     // Camera
     let mut camera = Camera::new();
 
-    camera.aspect_ratio = 16.0 / 9.0;
+    camera.aspect_ratio = 1.0; //16.0 / 9.0;
     camera.image_width = 600; //400;
     camera.samples_per_pixel = 200; //50;
     camera.max_depth = 50;
@@ -271,12 +270,12 @@ fn conrell_box(){
     world.add(Box::new(Quad::new(Point3::new(213.0, 554.0, 227.0), Vec3::new(130.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 105.0), light))); // light
 
     // box 1
-    let mut box1 = Quad::make_box(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
+    let box1 = Quad::make_box(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
     let box1 = RotateY::new(Arc::new(box1), 15.0);
     let box1 = Translate::new(Arc::new(box1), Vec3::new(265.0, 0.0, 295.0));
 
     // box 2
-    let mut box2 = Quad::make_box(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
+    let box2 = Quad::make_box(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
     let box2 = RotateY::new(Arc::new(box2), -18.0);
     let box2 = Translate::new(Arc::new(box2), Vec3::new(130.0, 0.0, 65.0));
 
@@ -458,7 +457,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
 
 
 fn main() {
-    let option = 8;
+    let option = 1;
 
     match option {
         1 => bouncing_spheres(),

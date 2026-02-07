@@ -16,29 +16,38 @@ pub type Color = Vec3;  // RGB color
 
 
 impl Vec3 {
-    
+
+    #[inline]
     pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
         Vec3 { x, y, z }
     }
 
+    #[inline]
     pub fn init_zero() -> Vec3 {
         Vec3 { x: 0.0, y: 0.0, z: 0.0 }
     }
 
+    #[inline]
     pub fn x(&self) -> f64 {
         self.x
     }
+    
+    #[inline]
     pub fn y(&self) -> f64 {
         self.y
     }
+
+    #[inline]
     pub fn z(&self) -> f64 {
         self.z
     }
 
+    #[inline]
     pub fn dot(&self, other: Vec3) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    #[inline]
     pub fn cross(&self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self.y * other.z - self.z * other.y,
@@ -47,6 +56,7 @@ impl Vec3 {
         }
     }
 
+    #[inline]
     pub fn length(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }

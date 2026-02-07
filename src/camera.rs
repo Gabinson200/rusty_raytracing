@@ -116,7 +116,7 @@ impl Camera {
             .collect();
 
         // Restore row order (parallel iterator returns out-of-order)
-        rows.sort_by_key(|(j, _)| *j);
+        //rows.sort_by_key(|(j, _)| *j);
 
         // Write PPM sequentially to stdout (so `> image.ppm` works)
         let stdout = io::stdout();

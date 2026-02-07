@@ -1,6 +1,4 @@
-// aabb.rs
-
-// Axis-Aligned Bounding Box (AABB) implementation (more or less good enough)
+// src/aabb.rs
 
 use crate::vec3::{Point3, Vec3};
 use crate::interval::Interval;
@@ -14,7 +12,6 @@ pub struct AABB {
 }
 
 impl AABB {
-
     pub fn empty() -> Self {
         AABB {
             x: Interval::EMPTY,
@@ -23,17 +20,11 @@ impl AABB {
         }
     }
 
-    fn pad_to_minimum(&mut self){
+    fn pad_to_minimum(&mut self) {
         let delta: f64 = 0.0001;
-        if self.x.size() < delta {
-            self.x = self.x.expand(delta);
-        }
-        if self.y.size() < delta {
-            self.y = self.y.expand(delta);
-        }
-        if self.z.size() < delta {
-            self.z = self.z.expand(delta);
-        }
+        if self.x.size() < delta { self.x = self.x.expand(delta); }
+        if self.y.size() < delta { self.y = self.y.expand(delta); }
+        if self.z.size() < delta { self.z = self.z.expand(delta); }
     }
 
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
@@ -60,7 +51,6 @@ impl AABB {
         };
         aabb.pad_to_minimum();
         aabb
-
     }
 
     pub fn shift(&self, delta: Vec3) -> Self {
@@ -84,40 +74,53 @@ impl AABB {
         let x_size = self.x.size();
         let y_size = self.y.size();
         let z_size = self.z.size();
-
-        if x_size > y_size && x_size > z_size {
-            0
-        } else if y_size > z_size {
-            1
-        } else {
-            2
-        }
+        if x_size > y_size && x_size > z_size { 0 } else if y_size > z_size { 1 } else { 2 }
     }
 
+    // Optimized hit function: Precomputed inverse + Unrolled loop + ORIGINAL LOGIC
     pub fn hit(&self, r: &Ray, mut ray_t: Interval) -> bool {
-        let ray_orig:Point3 = r.origin();
-        let ray_dir:Vec3 = r.direction();
+        let ray_orig = r.origin();
+        let inv_dir = r.inv_direction(); // Use precomputed value
 
-        for axis in 0..3{
-            let axis_interval: &Interval = self.axis_interval(axis);
-            let adinV: f64 = 1.0 / ray_dir[axis as usize];
-
-            // compute t0 and t1 for the slabs
-            let t0 = (axis_interval.min - ray_orig[axis as usize]) * adinV;
-            let t1 = (axis_interval.max - ray_orig[axis as usize]) * adinV;
-
-            if t0 < t1{
-                if t0 > ray_t.min {ray_t.min = t0;}
-                if t1 < ray_t.max {ray_t.max = t1;}
-            } else {
-                if t1 > ray_t.min {ray_t.min = t1;}
-                if t0 < ray_t.max {ray_t.max = t0;}
-            }
-
-            if ray_t.max <= ray_t.min{
-                return false;
-            }
+        // Unrolled Axis 0 (X)
+        let t0_0 = (self.x.min - ray_orig.x()) * inv_dir.x();
+        let t1_0 = (self.x.max - ray_orig.x()) * inv_dir.x();
+        
+        // Exact same logic structure as your working code
+        if t0_0 < t1_0 {
+            if t0_0 > ray_t.min { ray_t.min = t0_0; }
+            if t1_0 < ray_t.max { ray_t.max = t1_0; }
+        } else {
+            if t1_0 > ray_t.min { ray_t.min = t1_0; }
+            if t0_0 < ray_t.max { ray_t.max = t0_0; }
         }
-        return true;
+        if ray_t.max <= ray_t.min { return false; }
+
+        // Unrolled Axis 1 (Y)
+        let t0_1 = (self.y.min - ray_orig.y()) * inv_dir.y();
+        let t1_1 = (self.y.max - ray_orig.y()) * inv_dir.y();
+        
+        if t0_1 < t1_1 {
+            if t0_1 > ray_t.min { ray_t.min = t0_1; }
+            if t1_1 < ray_t.max { ray_t.max = t1_1; }
+        } else {
+            if t1_1 > ray_t.min { ray_t.min = t1_1; }
+            if t0_1 < ray_t.max { ray_t.max = t0_1; }
+        }
+        if ray_t.max <= ray_t.min { return false; }
+
+        // Unrolled Axis 2 (Z)
+        let t0_2 = (self.z.min - ray_orig.z()) * inv_dir.z();
+        let t1_2 = (self.z.max - ray_orig.z()) * inv_dir.z();
+        
+        if t0_2 < t1_2 {
+            if t0_2 > ray_t.min { ray_t.min = t0_2; }
+            if t1_2 < ray_t.max { ray_t.max = t1_2; }
+        } else {
+            if t1_2 > ray_t.min { ray_t.min = t1_2; }
+            if t0_2 < ray_t.max { ray_t.max = t0_2; }
+        }
+
+        return ray_t.max > ray_t.min;
     }    
 }

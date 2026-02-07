@@ -9,3 +9,10 @@ rand = "0.8.5"
 fastrand = "2"
 image = "0.25"
 rayon = "1.10"
+
+# Link time optimizations
+[profile.release]
+opt-level = 3       # Maximize optimization
+lto = "fat"         # Enable Link Time Optimization across all crates
+codegen-units = 1   # Compile as a single unit to maximize inlining (slower build, faster code)
+panic = "abort"     # Remove stack unwinding code (optional, slightly smaller/faster binary)

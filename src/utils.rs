@@ -9,7 +9,7 @@ pub mod prelude {
 
     // Types
     pub use crate::vec3::{Color, Point3, Vec3};
-    pub use crate::ray::{Ray, point_to_ray};
+    pub use crate::ray::{Ray};
 
     // Hittables
     pub use crate::hittable::{HitRecord, Hittable};
