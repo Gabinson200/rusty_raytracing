@@ -9,7 +9,6 @@ use crate::interval::Interval;
 use crate::utils::prelude::{random_f64, degrees_to_radians};
 use crate::material::Material;
 use rayon::prelude::*;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 
 pub struct Camera {
@@ -18,6 +17,8 @@ pub struct Camera {
     pub samples_per_pixel: u32, // number of samples per pixel for anti-aliasing
     pub max_depth: u32, // max recursion depth for ray tracing
     pub vfov: f64, // vertical field of view in degrees
+    pub sqrt_spp: i32, // square toot of number of samples per pixel
+    pub recip_sqrt_spp: f64, // reciprocal of square root of samples per pixel (1/sqrt_spp)
 
     // Camera orientation
     pub look_from: Point3,
@@ -55,6 +56,8 @@ impl Camera {
             vfov: 90.0,
             defocus_angle: 0.0,
             focus_distance: 10.0,
+            sqrt_spp: 0,
+            recip_sqrt_spp: 0.0,
 
             look_from: Point3::init_zero(),
             look_at: Point3::new(0.0, 0.0, -1.0),
@@ -74,55 +77,35 @@ impl Camera {
         }
     }
 
-
-    pub fn render(&mut self, world: &impl Hittable) {
+    pub fn render(&mut self, world: &impl Hittable){
+        // Initialize camera parameters
         self.initialize();
 
-        let w = self.image_width as usize;
-        let h = self.image_height as usize;
-
-        let rows_done = AtomicUsize::new(0);
-
-        // Render rows in parallel
-        let mut rows: Vec<(usize, Vec<Color>)> = (0..h)
-            .into_par_iter()
-            .map(|j| {
-                let mut row = Vec::with_capacity(w);
-                for i in 0..w {
-                    let mut pixel_color = Color::init_zero();
-                    for _ in 0..self.samples_per_pixel {
-                        let r = self.get_ray(i as u32, j as u32);
-                        pixel_color = pixel_color + self.ray_color(&r, self.max_depth, world);
-                    }
-                    row.push(pixel_color * self.pixel_samples_scale);
-                }
-
-                let done = rows_done.fetch_add(1, Ordering::Relaxed) + 1;
-                if done % 4 == 0 || done == h {
-                    eprint!("\rScanlines remaining: {:4}", h - done);
-                    io::stderr().flush().ok();
-                }
-
-                (j, row)
-            })
-            .collect();
-
-        // Put rows back in order (because parallel)
-        rows.sort_by_key(|(j, _)| *j);
-
-        // Write PPM to stdout (redirectable)
         let stdout = io::stdout();
         let mut out = io::BufWriter::new(stdout.lock());
+
         writeln!(out, "P3\n{} {}\n255", self.image_width, self.image_height).unwrap();
 
-        for (_, row) in rows {
-            for c in row {
-                Color::write_color(&mut out, c);
+        // Render
+        for j in 0..self.image_height {
+            eprint!("\rScanlines remaining: {:4}", self.image_height - j);
+            io::stderr().flush().unwrap();
+
+            for i in 0..self.image_width {
+                let mut pixel_color = Color::init_zero();
+
+                for s_i in 0..self.sqrt_spp {
+                    for s_j in 0..self.sqrt_spp {
+                        let r: Ray = self.get_ray(i as i32, j as i32, s_i, s_j);
+                        pixel_color = pixel_color + self.ray_color(&r, self.max_depth, world);
+                    }
+                }
+                
+                Color::write_color(&mut out,pixel_color * self.pixel_samples_scale);
             }
         }
         out.flush().unwrap();
-
-        eprintln!("\nDone.");
+        eprint!("\rDone.");
     }
 
     fn initialize(&mut self) {
@@ -136,6 +119,11 @@ impl Camera {
         let h = (theta / 2.0).tan();
         let vp_height = 2.0 * h * self.focus_distance;
         let vp_width = self.aspect_ratio * vp_height;
+
+        // Sampling
+        self.sqrt_spp = (self.samples_per_pixel as f64).sqrt() as i32;
+        self.pixel_samples_scale = 1.0 / (self.sqrt_spp * self.sqrt_spp) as f64;
+        self.recip_sqrt_spp = 1.0 / (self.sqrt_spp as f64);
 
         // Calculate camera basis vectors
         self.w = (self.look_from - self.look_at).unit_vector();
@@ -168,12 +156,14 @@ impl Camera {
         self.pixel_origin = pixel_origin;
         self.pixel_delta_u = pixel_delta_u;
         self.pixel_delta_v = pixel_delta_v;
-        self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
     }
 
-    fn sample_square(&self) -> Vec3 {
-        // Returns the vector to a random point in the [-.5, -.5] to [.5, .5] unit square
-        return Point3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0);
+    fn sample_square_stratified(&self, s_i: i32, s_j: i32) -> Vec3 {
+        // Returns the vector to a random point in the square sub-pixel specified by grid
+        // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
+        let px = (s_i as f64 + random_f64()) * self.recip_sqrt_spp; - 0.5;
+        let py = (s_j as f64 + random_f64()) * self.recip_sqrt_spp; - 0.5;
+        return Point3::new(px, py, 0.0);
 
     }
 
@@ -183,11 +173,11 @@ impl Camera {
         return self.center + (self.defocus_disk_u * p.x()) + (self.defocus_disk_v * p.y()); 
     }
 
-    fn get_ray(&self, i:u32, j:u32) -> Ray {
+    fn get_ray(&self, i:i32, j:i32, s_i: i32, s_j: i32) -> Ray {
         // Construct a ray originating from the defocus disk
         // and directed at a randomly sampled point
         // around pixel location i, j
-        let offset: Point3 = self.sample_square();
+        let offset: Point3 = self.sample_square_stratified(s_i, s_j);
 
         let pixel_sample: Point3 = self.pixel_origin
             + (self.pixel_delta_u * (i as f64 + offset.x()))
