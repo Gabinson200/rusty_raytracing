@@ -30,9 +30,10 @@ pub mod prelude {
     // Camera
     pub use crate::camera::Camera;
 
-    // Materials
-    pub use crate::material::{Material, Lambertian, Metal, Dielectric, DiffuseLight};
-
+    // Materials and mediums
+    pub use crate::material::{Material, Lambertian, Metal, Dielectric, DiffuseLight, Isotropic};
+    pub use crate::constant_medium::constant_medium;
+    
     // Image textures
     pub use crate::image_loader::ImageTextureData;
 

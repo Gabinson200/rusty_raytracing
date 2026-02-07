@@ -75,12 +75,16 @@ impl Camera {
         // Initialize camera parameters
         self.initialize();
 
-        println!("P3\n{} {}\n255", self.image_width, self.image_height);
+        let stdout = io::stdout();
+        let mut out = io::BufWriter::new(stdout.lock());
+
+        writeln!(out, "P3\n{} {}\n255", self.image_width, self.image_height).unwrap();
 
         // Render
         for j in 0..self.image_height {
             eprint!("\rScanlines remaining: {:4}", self.image_height - j);
-            io::stdout().flush().unwrap();
+            io::stderr().flush().unwrap();
+
             for i in 0..self.image_width {
                 let mut pixel_color = Color::init_zero();
                 for _sample in 0..self.samples_per_pixel {
@@ -88,9 +92,10 @@ impl Camera {
                     pixel_color = pixel_color + self.ray_color(&r, self.max_depth, world);
                 }
                 
-                Color::write_color(pixel_color * self.pixel_samples_scale);
+                Color::write_color(&mut out,pixel_color * self.pixel_samples_scale);
             }
         }
+        out.flush().unwrap();
         eprint!("\rDone.");
     }
 

@@ -119,6 +119,9 @@ impl Material for Dielectric {
     }
 }
 
+
+// Diffuse light material
+
 pub struct DiffuseLight {
     emit: Arc<dyn Texture>,
 }
@@ -140,5 +143,30 @@ impl Material for DiffuseLight {
 
     fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
         self.emit.value(u, v, p)
+    }
+}
+
+
+// Isotropic material for constant medium volumes
+
+pub struct Isotropic {
+    albedo: Arc<dyn Texture>,
+}
+
+impl Isotropic {
+    pub fn new(c: Color) -> Self {
+        Self { albedo: Arc::new(SolidColor::new(c)) }
+    }
+
+    pub fn from_texture(t: Arc<dyn Texture>) -> Self {
+        Self { albedo: t }
+    }
+}
+
+impl Material for Isotropic {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+        *scattered = Ray::new_time(rec.p, Vec3::random_unit_vector(), r_in.time());
+        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        return true;
     }
 }

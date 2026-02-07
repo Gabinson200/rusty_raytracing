@@ -1,5 +1,6 @@
 use crate::vec3::Color;
 use crate::interval::Interval;
+use std::io::Write;
 
 impl Color{
 
@@ -11,7 +12,7 @@ impl Color{
         return 0.0;
     }
 
-    pub fn write_color(pixel_color: Color) {
+    pub fn write_color<W: Write>(out: &mut W, pixel_color: Color) {
         let r = pixel_color.x();
         let g = pixel_color.y();
         let b = pixel_color.z();
@@ -26,7 +27,8 @@ impl Color{
         let ir = (256.0 * intensity.clamp(r)) as i32;
         let ig = (256.0 * intensity.clamp(g)) as i32;
         let ib = (256.0 * intensity.clamp(b)) as i32;
-        println!("{ir} {ig} {ib}");
+        // buffered write
+        writeln!(out, "{ir} {ig} {ib}").unwrap();
     }
 
 

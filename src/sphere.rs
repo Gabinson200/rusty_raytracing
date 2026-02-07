@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::aabb::AABB;
 
 
-
+#[derive(Clone)]
 pub struct Sphere {
     center: Ray, // if stationary ray direction is all zeros
     radius: f64,
