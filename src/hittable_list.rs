@@ -61,4 +61,9 @@ impl Hittable for HittableList {
 
         hit_anything
     }
+
+    fn bounding_box(&self) -> AABB {
+        // If empty list, return empty box.
+        self.bbox.unwrap_or_else(AABB::empty)
+    }
 }

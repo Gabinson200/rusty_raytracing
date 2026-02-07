@@ -83,6 +83,10 @@ impl Hittable for Translate {
 
         return true;
     }
+
+    fn bounding_box(&self) -> AABB {
+        self.bbox
+    }
 }
 
 // Rotation around Y axis

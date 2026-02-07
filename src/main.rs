@@ -377,9 +377,6 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
         }
     }
 
-    //let mut world = HittableList::new();
-
-    //world.add(Box::new(BVHNode::new(&boxes1)));
 
     let light = Arc::new(DiffuseLight::new(Color::new(7.0, 7.0, 7.0)));
     world.add(Box::new(Quad::new(Point3::new(123.0, 554.0, 147.0), Vec3::new(300.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 265.0), light.clone()))); // light
@@ -390,47 +387,66 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
     let moving_sphere_material = Arc::new(Lambertian::new(Color::new(0.7, 0.3, 0.1)));
     world.add(Box::new(Sphere::new(Ray::new(center, direction), 50.0, moving_sphere_material.clone())));
 
-    // dielectric sphere
+    // dielectric (glass) sphere
     let pos1 = Ray::new(Point3::new(260.0, 150.0, 45.0), Vec3::init_zero());
     world.add(Box::new(Sphere::new(pos1, 50.0, Arc::new(Dielectric::new(1.5)))));
 
     // metal sphere
     let pos2 = Ray::new(Point3::new(0.0, 150.0, 145.0), Vec3::init_zero());
-    world.add(Box::new(Sphere::new(pos2, 50.0, Arc::new(Metal::new(Color::new(0.8, 0.8, 0.9), 1.0)))));
+    let albedo = Color::new(0.8, 0.8, 0.9);
+    let fuzz = 0.8;
+    let sphere_material = Arc::new(Metal::new(albedo, fuzz));
+    world.add(Box::new(Sphere::new(pos2, 50.0, sphere_material)));
 
-
+    
+    // blue glass ball with smoke inside
     let boundary = Sphere::new(Ray::new(Point3::new(360.0, 150.0, 145.0), Vec3::init_zero()), 70.0, Arc::new(Dielectric::new(1.5)));
     world.add(Box::new(boundary.clone()));
-
     let medium1 = constant_medium::from_color(Arc::new(boundary.clone()), 0.2, &Color::new(0.2, 0.4, 0.9));
     world.add(Box::new(medium1));
 
+
+    // large sphere with low-density smoke cowering entire scene, creating a foggy atmosphere
     let boundary2 = Sphere::new(Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::init_zero()), 5000.0, Arc::new(Dielectric::new(1.5)));
     let medium2 = constant_medium::from_color(Arc::new(boundary2.clone()), 0.0001, &Color::new(1.0, 1.0, 1.0));
     world.add(Box::new(medium2));  
 
+    // Earth sphere with texture mapping
     let earth_texture: Arc<dyn Texture> = Arc::new(ImageTexture::new("textures/earthmap.jpg"));
     let earth_material = Arc::new(Lambertian::from_texture(earth_texture));
     world.add(Box::new(Sphere::new(Ray::new(Point3::new(400.0, 200.0, 400.0), Vec3::init_zero()), 100.0, earth_material.clone())));
     
+    // Perlin noise textured sphere
+    // this might be slowing down the rendering significantly, especially at higher resolutions and sample counts
+    let pertex = Arc::new(NoiseTexture::new(0.2));
+    world.add(Box::new(Sphere::new(Ray::new(Point3::new(220.0, 280.0, 300.0), Vec3::init_zero()), 80.0, Arc::new(Lambertian::from_texture(pertex)))));
 
+    // Cluster of small spheres
     let mut boxes2 = HittableList::new();
 
     let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
 
     let ns = 1000;
     for _ in 0..ns {
-        let random_position = Point3::new(random_f64_range(0.0, 165.0), random_f64_range(0.0, 165.0), random_f64_range(0.0, 165.0));
-        boxes2.add(Box::new(Sphere::new(Ray::new(random_position, Vec3::init_zero()), 10.0, white.clone())));
+        let random_position = Point3::new(
+            random_f64_range(0.0, 165.0),
+            random_f64_range(0.0, 165.0),
+            random_f64_range(0.0, 165.0),
+        );
+        boxes2.add(Box::new(Sphere::new(
+            Ray::new(random_position, Vec3::init_zero()),
+            10.0,
+            white.clone(),
+        )));
     }
+
+    // Build a BVH for the cluster BEFORE rotating/translating it
+    let boxes2_bvh = Arc::new(BVHNode::new(&boxes2));
 
     world.add(Box::new(
         Translate::new(
-            Arc::new(RotateY::new(
-                Arc::new(boxes2),
-                15.0
-            )),
-            Vec3::new(-100.0, 270.0, 395.0)
+            Arc::new(RotateY::new(boxes2_bvh, 15.0)),
+            Vec3::new(-100.0, 270.0, 395.0),
         )
     ));
 
@@ -460,7 +476,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
 
 
 fn main() {
-    let option = 9;
+    let option = 0;
 
     match option {
         1 => bouncing_spheres(),
@@ -471,8 +487,8 @@ fn main() {
         6 => simple_light(),
         7 => conrell_box(),
         8 => cornell_smoke(),
-        9 => final_scene(800, 10000, 40),
+        9 => final_scene(800, 10000, 40), // took over an hour
         _ => { eprintln!("running scene default\n");
-            final_scene(400, 250, 4);} // ~7min
+            final_scene(400, 500, 10);} // ~ less than a minute
     }
 }
