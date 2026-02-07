@@ -1,4 +1,4 @@
-// sphere.rs
+// src/sphere.rs
 use crate::vec3::{Point3, Vec3};
 use crate::ray::Ray;
 use crate::hittable::{Hittable, HitRecord};
@@ -21,7 +21,6 @@ impl Sphere {
         let rvec = Point3::new(radius, radius, radius);
         let bbox1 = AABB::extrema_box(center.origin() - rvec, center.origin() + rvec);
 
-        // if the sphere is moving, extend the bounding box to include the position at time=1.0
         if center.direction() != Vec3::init_zero() {
             let bbox2 = AABB::extrema_box(center.at(1.0) - rvec, center.at(1.0) + rvec);
             let bbox_combined = AABB::from_two_boxes(bbox1, bbox2);
@@ -55,7 +54,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray:&Ray, ray_t:Interval, rec:&mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, ray: &Ray, ray_t: Interval, rec: &mut HitRecord<'a>) -> bool {
         let current_center = self.center.at(ray.time());
         let oc = current_center - ray.origin();
         let dir = ray.direction();
@@ -86,7 +85,7 @@ impl Hittable for Sphere {
         let (u, v) = Sphere::get_sphere_uv(&outward_normal);
         rec.u = u;
         rec.v = v;
-        rec.material = Arc::clone(&self.material);
+        rec.material = Some(self.material.as_ref());
 
         return true;
     }

@@ -66,7 +66,7 @@ impl BVHNode {
 }
 
 impl Hittable for BVHNode {
-    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, r: &Ray, ray_t: Interval, rec: &mut HitRecord<'a>) -> bool {
         if !self.bbox.hit(r, ray_t) {
             return false;
         }

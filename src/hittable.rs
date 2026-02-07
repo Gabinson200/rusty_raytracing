@@ -1,38 +1,31 @@
-// hittable.rs
+// src/hittable.rs
 
 use std::sync::{Arc, OnceLock};
 
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3, Color};
 use crate::interval::Interval;
-use crate::material::{Material, Lambertian, Metal};
+use crate::material::{Material, Lambertian};
 use crate::aabb::AABB;
 
 
 #[derive(Clone)]
-pub struct HitRecord {
-    pub p:Point3,
-    pub normal:Vec3,
-    pub material: Arc<dyn Material>,
-    pub t:f64,
-    pub front_face:bool,
+pub struct HitRecord<'a> {
+    pub p: Point3,
+    pub normal: Vec3,
+    pub material: Option<&'a dyn Material>,
+    pub t: f64,
+    pub front_face: bool,
     pub u: f64,
     pub v: f64,
 }
 
-fn default_material() -> Arc<dyn Material> {
-    static DEFAULT: OnceLock<Arc<dyn Material>> = OnceLock::new();
-    DEFAULT
-        .get_or_init(|| Arc::new(Lambertian::new(Color::new(0.0, 0.0, 0.0))))
-        .clone()
-}
-
-impl HitRecord {
+impl<'a> HitRecord<'a> {
     pub fn new() -> Self {
         Self {
             p: Point3::init_zero(),
             normal: Vec3::init_zero(),
-            material: default_material(),
+            material: None,
             t: 0.0,
             front_face: true,
             u: 0.0,
@@ -40,23 +33,23 @@ impl HitRecord {
         }
     }
 
-    pub fn set_face_normal(&mut self, r:&Ray, outward_normal:Vec3) {
+    pub fn set_face_normal(&mut self, r: &Ray, outward_normal: Vec3) {
         self.front_face = r.direction().dot(outward_normal) < 0.0;
         self.normal = if self.front_face { outward_normal } else { -outward_normal };
     }
 }
 
 pub trait Hittable: Send + Sync {
-    fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool;
+    // FIX: &'a self ensures the object lives as long as the record borrowing from it
+    fn hit<'a>(&'a self, r: &Ray, interval: Interval, rec: &mut HitRecord<'a>) -> bool;
 
     fn bounding_box(&self) -> AABB {
         AABB::empty()
     }
-
 }
 
 
-// Translation transformation for hittable objects
+// Translation transformation
 pub struct Translate {
     pub hittable: Arc<dyn Hittable>,
     pub offset: Vec3,
@@ -64,7 +57,6 @@ pub struct Translate {
 }
 
 impl Translate {
-
     pub fn new(hittable: Arc<dyn Hittable>, offset: Vec3) -> Self {
         let bbox = hittable.bounding_box();
         let offset_bbox = AABB::new(bbox.x.shift(offset.x()), bbox.y.shift(offset.y()), bbox.z.shift(offset.z()));
@@ -76,13 +68,12 @@ impl Translate {
     }
 }
 
-impl Hittable for Translate{
-    fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool {
-        
-        // Move teh ray backwards by the offset
+impl Hittable for Translate {
+    fn hit<'a>(&'a self, r: &Ray, interval: Interval, rec: &mut HitRecord<'a>) -> bool {
+        // Move the ray backwards by the offset
         let offset_r = Ray::new_time(r.origin() - self.offset, r.direction(), r.time());
 
-        // DEtermine wether an intersection exisst alng hte offset ray and where
+        // Determine whether an intersection exists along the offset ray
         if !self.hittable.hit(&offset_r, interval, rec) {
             return false;
         }
@@ -91,12 +82,10 @@ impl Hittable for Translate{
         rec.p = rec.p + self.offset;
 
         return true;
-        
     }
 }
 
-// Rotation around the Y axis transformation for hittable objects
-
+// Rotation around Y axis
 pub struct RotateY {
     object: Arc<dyn Hittable>,
     sin_theta: f64,
@@ -104,14 +93,13 @@ pub struct RotateY {
     bbox: AABB,
 }
 
-impl RotateY{
+impl RotateY {
     pub fn new(object: Arc<dyn Hittable>, angle: f64) -> Self {
         let radians = angle.to_radians();
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
         let bbox = object.bounding_box();
 
-        // Compute the bounding box of the rotated object
         let mut min = Point3::new(f64::INFINITY, f64::INFINITY, f64::INFINITY);
         let mut max = Point3::new(f64::NEG_INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY);
 
@@ -141,10 +129,8 @@ impl RotateY{
     }
 }
 
-
 impl Hittable for RotateY {
-    fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool {
-        // Rotate ray in the opposite direction
+    fn hit<'a>(&'a self, r: &Ray, interval: Interval, rec: &mut HitRecord<'a>) -> bool {
         let origin = r.origin();
         let direction = r.direction();
 
@@ -166,7 +152,6 @@ impl Hittable for RotateY {
             return false;
         }
 
-        // Rotate the hit point and normal back
         let p = rec.p;
         let normal = rec.normal;
 

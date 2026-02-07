@@ -1,4 +1,4 @@
-// hittable_list.rs
+// src/hittable_list.rs
 
 use crate::hittable::{Hittable, HitRecord};
 use crate::ray::Ray;
@@ -19,7 +19,6 @@ impl HittableList {
         HittableList { objects: Vec::new(), bbox: None }
     }
 
-    // take Box<dyn Hittable> but internally store Arc
     pub fn add(&mut self, object: Box<dyn Hittable>) {
         let obj: HittablePtr = Arc::from(object);
 
@@ -47,7 +46,7 @@ impl HittableList {
 
 
 impl Hittable for HittableList {
-    fn hit(&self, r:&Ray, ray_t:Interval, rec:&mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, r: &Ray, ray_t: Interval, rec: &mut HitRecord<'a>) -> bool {
         let mut temp_rec = HitRecord::new(); // Temporary hit record
         let mut hit_anything = false;
         let mut closest_so_far = ray_t.max;
@@ -56,7 +55,7 @@ impl Hittable for HittableList {
             if object.hit(r, Interval::new(ray_t.min, closest_so_far), &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                mem::swap(rec, &mut temp_rec); //*rec = temp_rec.clone(); // clone but cheap
+                mem::swap(rec, &mut temp_rec);
             }
         }
 

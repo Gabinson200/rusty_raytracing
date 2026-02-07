@@ -1,4 +1,4 @@
-// quad.rs
+// src/quad.rs
 
 use std::sync::Arc;
 use crate::vec3::{Point3, Vec3};
@@ -40,21 +40,6 @@ impl Quad {
         if !unit_interval.contains(alpha) || !unit_interval.contains(beta) {
             return false;
         }
-
-        // for triangle {;
-        /* 
-        if alpha < 0.0 || beta < 0.0 || (alpha + beta) > 1.0 {
-            return false;
-        }
-        */
-
-        // for ellipses (:
-        /* 
-        if !unit_interval.contains(alpha) || !unit_interval.contains(beta) || (alpha*alpha + beta*beta).sqrt() > 1.0 {
-            return false;
-        }
-        */
-
         rec.u = alpha;
         rec.v = beta;
         return true;
@@ -64,7 +49,6 @@ impl Quad {
     pub fn make_box(a: &Point3, b: &Point3, material: Arc<dyn Material>) -> HittableList {
         let mut sides = HittableList::new();
 
-        // two opposite vertices with min and max coordinates
         let min = Point3::new(a.x().min(b.x()), a.y().min(b.y()), a.z().min(b.z()));
         let max = Point3::new(a.x().max(b.x()), a.y().max(b.y()), a.z().max(b.z()));
 
@@ -84,21 +68,18 @@ impl Quad {
 }
 
 impl Hittable for Quad {
-    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, r: &Ray, ray_t: Interval, rec: &mut HitRecord<'a>) -> bool {
         let denom = self.normal.dot(r.direction());
 
-        // no hit if plane is parallel to ray
         if denom.abs() < 1e-8 {
             return false;
         }
 
-        // return false if the hit point parameter t is outside of the ray interval
         let t = (self.D - self.normal.dot(r.origin())) / denom;
         if !ray_t.contains(t) {
             return false;
         }
 
-        // Determine if the hitpoint lies within the planar shape using its plane coordinates
         let intersection = r.at(t);
         let planar_hitpt_vector = intersection - self.q;
         let alpha = self.w.dot(planar_hitpt_vector.cross(self.v));
@@ -110,11 +91,10 @@ impl Hittable for Quad {
 
         rec.t = t;
         rec.p = intersection;
-        rec.material = self.material.clone();
+        rec.material = Some(self.material.as_ref());
         rec.set_face_normal(r, self.normal);
 
         return true;
-
     }
 
 

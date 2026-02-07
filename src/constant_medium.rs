@@ -1,4 +1,4 @@
-// constant_medium.rs
+// src/constant_medium.rs
 use std::sync::Arc;
 use crate::hittable::{Hittable, HitRecord};
 use crate::material::Material;
@@ -8,7 +8,7 @@ use crate::aabb::AABB;
 use crate::utils::prelude::random_f64;
 use crate::vec3::{Vec3, Color, Point3};
 use crate::material::Isotropic;
-
+use std::f64::{INFINITY, NEG_INFINITY};
 
 pub struct constant_medium {
     pub boundary: Arc<dyn Hittable>,
@@ -28,20 +28,19 @@ impl constant_medium {
     pub fn bounding_box(&self) -> AABB {
         self.boundary.bounding_box()
     }
-
 }
 
-
 impl Hittable for constant_medium {
-    fn hit(&self, r: &Ray, interval: Interval, rec: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, r: &Ray, interval: Interval, rec: &mut HitRecord<'a>) -> bool {
         let mut rec1 = HitRecord::new();
         let mut rec2 = HitRecord::new();
 
-        if !self.boundary.hit(r, Interval::UNIVERSE, &mut rec1){
+        // Note: Interval::UNIVERSE or new(-inf, inf) depending on your utils
+        if !self.boundary.hit(r, Interval::new(NEG_INFINITY, INFINITY), &mut rec1){
             return false;
         }
 
-        if !self.boundary.hit(r, Interval::new(rec1.t + 0.0001, f64::INFINITY), &mut rec2) {
+        if !self.boundary.hit(r, Interval::new(rec1.t + 0.0001, INFINITY), &mut rec2) {
             return false;
         }
 
@@ -69,9 +68,10 @@ impl Hittable for constant_medium {
 
         rec.normal = Vec3::new(1.0, 0.0, 0.0);
         rec.front_face = true;
-        rec.material = self.phase_function.clone();
+        
+        // This assignment works now because 'a self ensures phase_function lives long enough
+        rec.material = Some(self.phase_function.as_ref());
 
         return true;
     }
-
 }
