@@ -286,10 +286,10 @@ fn conrell_box(){
     // Camera
     let mut camera = Camera::new();
 
-    camera.aspect_ratio = 16.0 / 9.0; //1.0;
+    camera.aspect_ratio = 1.0;
     camera.image_width = 600;
-    camera.samples_per_pixel = 64;
-    camera.max_depth = 50;
+    camera.samples_per_pixel = 200;
+    camera.max_depth = 30;
 
     camera.vfov = 40.0;
     camera.look_from = Point3::new(278.0, 278.0, -800.0);
@@ -436,7 +436,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
     // Camera
     let mut camera = Camera::new();
 
-    camera.aspect_ratio = 16.0 / 9.0;
+    camera.aspect_ratio = 1.0;
     camera.image_width = image_width;
     camera.samples_per_pixel = samples_per_pixel;
     camera.max_depth = max_depth;
@@ -458,7 +458,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
 
 
 fn main() {
-    let option = 7;
+    let option = 8;
 
     match option {
         1 => bouncing_spheres(),

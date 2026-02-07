@@ -9,7 +9,7 @@ use crate::interval::Interval;
 use crate::utils::prelude::{random_f64, degrees_to_radians};
 use crate::material::Material;
 use rayon::prelude::*;
-
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct Camera {
     pub aspect_ratio: f64, // ratio of image width over height
@@ -77,35 +77,60 @@ impl Camera {
         }
     }
 
-    pub fn render(&mut self, world: &impl Hittable){
-        // Initialize camera parameters
+    pub fn render(&mut self, world: &impl Hittable) {
         self.initialize();
 
+        let cam = &*self; // immutable shared view for parallel work
+        let w = cam.image_width as usize;
+        let h = cam.image_height as usize;
+
+        let rows_done = AtomicUsize::new(0);
+
+        // Render rows in parallel
+        let mut rows: Vec<(usize, Vec<Color>)> = (0..h)
+            .into_par_iter()
+            .map(|j| {
+                let mut row = Vec::with_capacity(w);
+
+                for i in 0..w {
+                    let mut pixel_color = Color::init_zero();
+
+                    for s_i in 0..cam.sqrt_spp {
+                        for s_j in 0..cam.sqrt_spp {
+                            let r = cam.get_ray(i as i32, j as i32, s_i, s_j);
+                            pixel_color = pixel_color + cam.ray_color(&r, cam.max_depth, world);
+                        }
+                    }
+
+                    row.push(pixel_color * cam.pixel_samples_scale);
+                }
+
+                let done = rows_done.fetch_add(1, Ordering::Relaxed) + 1;
+                if done % 4 == 0 || done == h {
+                    eprint!("\rScanlines remaining: {:4}", h - done);
+                    io::stderr().flush().ok();
+                }
+
+                (j, row)
+            })
+            .collect();
+
+        // Restore row order (parallel iterator returns out-of-order)
+        rows.sort_by_key(|(j, _)| *j);
+
+        // Write PPM sequentially to stdout (so `> image.ppm` works)
         let stdout = io::stdout();
         let mut out = io::BufWriter::new(stdout.lock());
+        writeln!(out, "P3\n{} {}\n255", cam.image_width, cam.image_height).unwrap();
 
-        writeln!(out, "P3\n{} {}\n255", self.image_width, self.image_height).unwrap();
-
-        // Render
-        for j in 0..self.image_height {
-            eprint!("\rScanlines remaining: {:4}", self.image_height - j);
-            io::stderr().flush().unwrap();
-
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::init_zero();
-
-                for s_i in 0..self.sqrt_spp {
-                    for s_j in 0..self.sqrt_spp {
-                        let r: Ray = self.get_ray(i as i32, j as i32, s_i, s_j);
-                        pixel_color = pixel_color + self.ray_color(&r, self.max_depth, world);
-                    }
-                }
-                
-                Color::write_color(&mut out,pixel_color * self.pixel_samples_scale);
+        for (_, row) in rows {
+            for c in row {
+                Color::write_color(&mut out, c);
             }
         }
+
         out.flush().unwrap();
-        eprint!("\rDone.");
+        eprintln!("\nDone.");
     }
 
     fn initialize(&mut self) {
@@ -161,8 +186,8 @@ impl Camera {
     fn sample_square_stratified(&self, s_i: i32, s_j: i32) -> Vec3 {
         // Returns the vector to a random point in the square sub-pixel specified by grid
         // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
-        let px = (s_i as f64 + random_f64()) * self.recip_sqrt_spp; - 0.5;
-        let py = (s_j as f64 + random_f64()) * self.recip_sqrt_spp; - 0.5;
+        let px = (s_i as f64 + random_f64()) * self.recip_sqrt_spp - 0.5;
+        let py = (s_j as f64 + random_f64()) * self.recip_sqrt_spp - 0.5;
         return Point3::new(px, py, 0.0);
 
     }
