@@ -57,7 +57,7 @@ fn bouncing_spheres() {
     // Camera
     let mut camera = Camera::new();
 
-    camera.aspect_ratio = 1.0;//16.0 / 9.0;
+    camera.aspect_ratio = 16.0 / 9.0;
     camera.image_width = 600; //400;
     camera.samples_per_pixel = 200; //50;
     camera.max_depth = 50;
@@ -433,7 +433,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
     // Camera
     let mut camera = Camera::new();
 
-    camera.aspect_ratio = 1.0;
+    camera.aspect_ratio = 16.0 / 9.0;
     camera.image_width = image_width;
     camera.samples_per_pixel = samples_per_pixel;
     camera.max_depth = max_depth;
@@ -455,7 +455,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
 
 
 fn main() {
-    let option = 5;
+    let option = 8;
 
     match option {
         1 => bouncing_spheres(),
@@ -468,7 +468,6 @@ fn main() {
         8 => cornell_smoke(),
         9 => final_scene(800, 10000, 40),
         _ => { eprintln!("running scene default\n");
-            final_scene(400, 50, 4);}
-            // 400 , 250, 4
+            final_scene(400, 250, 4);}
     }
 }

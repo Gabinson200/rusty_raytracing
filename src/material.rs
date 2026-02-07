@@ -8,10 +8,13 @@ use crate::texture::{Texture, SolidColor, CheckerTexture};
 use std::sync::Arc;
 
 
-pub trait Material {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool{
-        return false;
-    }
+pub trait Material: Send + Sync {
+    fn scatter(&self,
+               r_in: &Ray,
+               rec: &HitRecord, 
+               attenuation: &mut Color, 
+               scattered: &mut Ray
+            ) -> bool;
 
     fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
         Color::init_zero()

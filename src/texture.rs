@@ -7,7 +7,7 @@ use crate::vec3::Point3;
 use crate::image_loader::ImageTextureData;
 use crate::perlin::Perlin;
 
-pub trait Texture{
+pub trait Texture : Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;  
 }
 

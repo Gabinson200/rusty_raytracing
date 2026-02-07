@@ -34,14 +34,14 @@ impl constant_medium {
 
 impl Hittable for constant_medium {
     fn hit(&self, r: &Ray, interval: Interval, rec: &mut HitRecord) -> bool {
-        let rec1 = &mut HitRecord::new();
-        let rec2 = &mut HitRecord::new();
+        let mut rec1 = HitRecord::new();
+        let mut rec2 = HitRecord::new();
 
-        if !self.boundary.hit(r, Interval::UNIVERSE, rec1){
+        if !self.boundary.hit(r, Interval::UNIVERSE, &mut rec1){
             return false;
         }
 
-        if !self.boundary.hit(r, Interval::new(rec1.t + 0.0001, f64::INFINITY), rec2) {
+        if !self.boundary.hit(r, Interval::new(rec1.t + 0.0001, f64::INFINITY), &mut rec2) {
             return false;
         }
 

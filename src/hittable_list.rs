@@ -5,6 +5,7 @@ use crate::ray::Ray;
 use crate::interval::Interval;
 use crate::aabb::AABB;
 use std::sync::Arc;
+use std::mem;
 
 pub type HittablePtr = Arc<dyn Hittable>;
 
@@ -55,7 +56,7 @@ impl Hittable for HittableList {
             if object.hit(r, Interval::new(ray_t.min, closest_so_far), &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                *rec = temp_rec.clone(); // clone but cheap
+                mem::swap(rec, &mut temp_rec); //*rec = temp_rec.clone(); // clone but cheap
             }
         }
 

@@ -52,15 +52,12 @@ pub mod prelude {
     // Random number in [0,1)
     #[inline]
     pub fn random_f64() -> f64 {
-        let random_float: f64 = rand::random::<f64>();
-        //eprintln!("Random f64: {}", random_float);
-        return random_float;
+        fastrand::f64() // rand::random::<f64>()
     }
 
     #[inline]
     pub fn random_i32() -> i32 {
-        let random_int: i32 = rand::random::<i32>();
-        return random_int;
+        fastrand::i32(..) // rand::random::<i32>()
     }
 
     // Random number in [min,max]

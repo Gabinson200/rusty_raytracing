@@ -1,6 +1,6 @@
 // hittable.rs
 
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3, Color};
@@ -20,12 +20,19 @@ pub struct HitRecord {
     pub v: f64,
 }
 
+fn default_material() -> Arc<dyn Material> {
+    static DEFAULT: OnceLock<Arc<dyn Material>> = OnceLock::new();
+    DEFAULT
+        .get_or_init(|| Arc::new(Lambertian::new(Color::new(0.0, 0.0, 0.0))))
+        .clone()
+}
+
 impl HitRecord {
     pub fn new() -> Self {
         Self {
             p: Point3::init_zero(),
             normal: Vec3::init_zero(),
-            material: Arc::new(Lambertian::new(Color::new(0.0,0.0,0.0))),
+            material: default_material(),
             t: 0.0,
             front_face: true,
             u: 0.0,
@@ -39,7 +46,7 @@ impl HitRecord {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, r:&Ray, interval:Interval, rec:&mut HitRecord) -> bool;
 
     fn bounding_box(&self) -> AABB {
