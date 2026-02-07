@@ -356,7 +356,9 @@ fn cornell_smoke(){
 
 
 fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
-    let mut boxes1 = HittableList::new();
+    //let mut boxes1 = HittableList::new();
+
+    let mut world = HittableList::new();
 
     let ground = Arc::new(Lambertian::new(Color::new(0.48, 0.83, 0.53)));
 
@@ -371,13 +373,13 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
             let y1 = random_f64_range(1.0, 101.0);
             let z1 = z0 + w;
 
-            boxes1.add(Box::new(Quad::make_box(&Point3::new(x0, y0, z0), &Point3::new(x1, y1, z1), ground.clone())));
+            world.add(Box::new(Quad::make_box(&Point3::new(x0, y0, z0), &Point3::new(x1, y1, z1), ground.clone())));
         }
     }
 
-    let mut world = HittableList::new();
+    //let mut world = HittableList::new();
 
-    world.add(Box::new(BVHNode::new(&boxes1)));
+    //world.add(Box::new(BVHNode::new(&boxes1)));
 
     let light = Arc::new(DiffuseLight::new(Color::new(7.0, 7.0, 7.0)));
     world.add(Box::new(Quad::new(Point3::new(123.0, 554.0, 147.0), Vec3::new(300.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 265.0), light.clone()))); // light
@@ -425,7 +427,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
     world.add(Box::new(
         Translate::new(
             Arc::new(RotateY::new(
-                Arc::new(BVHNode::new(&boxes2)),
+                Arc::new(boxes2),
                 15.0
             )),
             Vec3::new(-100.0, 270.0, 395.0)
@@ -449,15 +451,16 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
 
     camera.defocus_angle = 0.0; // degrees
 
+    let root = BVHNode::new(&world); // create BVH for the entire scene
     //camera.render(&world);
-    camera.render(&world);
+    camera.render(&root);
 
 }
 
 
 
 fn main() {
-    let option = 1;
+    let option = 9;
 
     match option {
         1 => bouncing_spheres(),
@@ -470,6 +473,6 @@ fn main() {
         8 => cornell_smoke(),
         9 => final_scene(800, 10000, 40),
         _ => { eprintln!("running scene default\n");
-            final_scene(400, 250, 4);}
+            final_scene(400, 250, 4);} // ~7min
     }
 }

@@ -16,3 +16,4 @@ opt-level = 3       # Maximize optimization
 lto = "fat"         # Enable Link Time Optimization across all crates
 codegen-units = 1   # Compile as a single unit to maximize inlining (slower build, faster code)
 panic = "abort"     # Remove stack unwinding code (optional, slightly smaller/faster binary)
+
