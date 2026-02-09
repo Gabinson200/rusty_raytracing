@@ -69,6 +69,7 @@ impl AABB {
             _ => panic!("Axis index out of bounds"),
         }
     }
+    
 
     pub fn longest_axis(&self) -> i32 {
         let x_size = self.x.size();
@@ -77,7 +78,9 @@ impl AABB {
         if x_size > y_size && x_size > z_size { 0 } else if y_size > z_size { 1 } else { 2 }
     }
 
+    
     // Optimized hit function: Precomputed inverse + Unrolled loop + ORIGINAL LOGIC
+    #[inline]
     pub fn hit(&self, r: &Ray, mut ray_t: Interval) -> bool {
         let ray_orig = r.origin();
         let inv_dir = r.inv_direction(); // Use precomputed value
@@ -123,4 +126,50 @@ impl AABB {
 
         return ray_t.max > ray_t.min;
     }    
+
+
+    #[inline]
+    pub fn hit_interval(&self, r: &Ray, mut ray_t: Interval) -> Option<Interval> {
+        let ray_orig = r.origin();
+        let inv_dir = r.inv_direction();
+
+        // X slab
+        let t0 = (self.x.min - ray_orig.x()) * inv_dir.x();
+        let t1 = (self.x.max - ray_orig.x()) * inv_dir.x();
+        if t0 < t1 {
+            if t0 > ray_t.min { ray_t.min = t0; }
+            if t1 < ray_t.max { ray_t.max = t1; }
+        } else {
+            if t1 > ray_t.min { ray_t.min = t1; }
+            if t0 < ray_t.max { ray_t.max = t0; }
+        }
+        if ray_t.max <= ray_t.min { return None; }
+
+        // Y slab
+        let t0 = (self.y.min - ray_orig.y()) * inv_dir.y();
+        let t1 = (self.y.max - ray_orig.y()) * inv_dir.y();
+        if t0 < t1 {
+            if t0 > ray_t.min { ray_t.min = t0; }
+            if t1 < ray_t.max { ray_t.max = t1; }
+        } else {
+            if t1 > ray_t.min { ray_t.min = t1; }
+            if t0 < ray_t.max { ray_t.max = t0; }
+        }
+        if ray_t.max <= ray_t.min { return None; }
+
+        // Z slab
+        let t0 = (self.z.min - ray_orig.z()) * inv_dir.z();
+        let t1 = (self.z.max - ray_orig.z()) * inv_dir.z();
+        if t0 < t1 {
+            if t0 > ray_t.min { ray_t.min = t0; }
+            if t1 < ray_t.max { ray_t.max = t1; }
+        } else {
+            if t1 > ray_t.min { ray_t.min = t1; }
+            if t0 < ray_t.max { ray_t.max = t0; }
+        }
+        if ray_t.max <= ray_t.min { return None; }
+
+        Some(ray_t)
+    }
+
 }

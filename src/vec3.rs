@@ -68,7 +68,7 @@ impl Vec3 {
 
 
     pub fn near_zero(&self) -> bool {
-        let s = f64::MIN;
+        let s = 1e-8;
         (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
     }
 

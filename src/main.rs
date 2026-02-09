@@ -473,10 +473,154 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32){
 
 }
 
+fn metaballs(){
+
+    let mut world = HittableList::new();
+    
+    let mat = Arc::new(Metal::new(Color::new(0.8, 0.8, 0.9), 0.3));
+    let metaballs1 = Metaballs::new(
+        vec![
+            Point3::new(0.0, 0.0, 0.0),
+            Point3::new(2.0, 0.0, 0.0),
+            Point3::new(4.0, 0.0, 0.0),
+        ],
+        vec![1.0, 0.9, 0.8],
+        1.0, // threshold
+        mat,
+    );
+    world.add(Box::new(metaballs1));
+
+    let mat2 = Arc::new(Metal::new(Color::new(0.4, 0.4, 0.1), 1.0));
+    let metaballs2 = Metaballs::new(
+        vec![
+            Point3::new(0.0, 3.0, 0.0),
+            Point3::new(2.0, 3.0, 0.0),
+            Point3::new(4.0, 3.0, 0.0),
+        ],
+        vec![2.0, 1.0, 0.5],
+        3.0, // threshold
+        mat2,
+    );
+    world.add(Box::new(metaballs2));
+
+    // Camera
+    let mut camera = Camera::new();
+
+    camera.aspect_ratio = 1.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 50;
+    camera.max_depth = 10;
+
+    camera.vfov = 80.0;
+    camera.look_from = Point3::new(0.0, 0.0, -10.0);
+    camera.look_at = Point3::new(0.0, 0.0, -1.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0; // degrees
+
+    camera.background_color = Color::new(0.7, 0.8, 1.0); // light blue background
+
+    let root = BVHNode::new(&world); // create BVH for the entire scene
+    //camera.render(&world);
+    camera.render(&root);
+}
+
+
+fn cornell_teardrops() {
+    // World
+    let mut world = HittableList::new();
+
+    // Cornell materials
+    let red   = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
+
+    // Light
+    let light = Arc::new(DiffuseLight::new(Color::new(15.0, 15.0, 15.0)));
+    world.add(Box::new(Quad::new(
+        Point3::new(213.0, 554.0, 227.0),
+        Vec3::new(130.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 105.0),
+        light,
+    )));
+
+    // Cornell box walls
+    world.add(Box::new(Quad::new(Point3::new(555.0, 0.0,   0.0), Vec3::new(0.0, 0.0, 555.0), Vec3::new(0.0, 555.0, 0.0), green))); // left
+    world.add(Box::new(Quad::new(Point3::new(0.0,   0.0, 555.0), Vec3::new(0.0, 0.0,-555.0), Vec3::new(0.0, 555.0, 0.0), red)));   // right
+    world.add(Box::new(Quad::new(Point3::new(0.0,   0.0,   0.0), Vec3::new(555.0,0.0, 0.0),   Vec3::new(0.0, 0.0, 555.0), white.clone()))); // floor
+    world.add(Box::new(Quad::new(Point3::new(0.0, 555.0,   0.0), Vec3::new(555.0,0.0, 0.0),   Vec3::new(0.0, 0.0, 555.0), white.clone()))); // ceiling
+    world.add(Box::new(Quad::new(Point3::new(0.0,   0.0, 555.0), Vec3::new(555.0,0.0, 0.0),   Vec3::new(0.0, 555.0, 0.0), white.clone()))); // back
+
+    // --- Teardrops (metaballs) ---
+    // We will "scale up" your small teardrop by choosing Cornell-sized centers/radii directly.
+    let matte_blue  = Arc::new(Lambertian::new(Color::new(0.2, 0.4, 0.9)));
+    let matte_red   = Arc::new(Lambertian::new(Color::new(0.9, 0.1, 0.1)));
+    let glass = Arc::new(Dielectric::new(1.5));
+    let metal = Arc::new(Metal::new(Color::new(0.9, 0.0, 0.1), 0.1));
+
+    // Left teardrop: glass boundary + blue smoke inside
+    // Shape: 3 metaballs stacked vertically, radii decreasing to form a teardrop-ish taper.
+    let tear_left = Metaballs::new(
+        vec![
+            Point3::new(185.0,  75.0, 280.0), // bottom
+            Point3::new(185.0, 180.0, 280.0), // mid
+            Point3::new(185.0, 220.0, 280.0), // top
+        ],
+        vec![50.0, 18.0, 6.0],
+        0.55, // threshold (keep as 1.0 for your current field definition)
+        glass.clone(),
+    );
+    world.add(Box::new(tear_left.clone()));
+
+    // Blue fog inside the glass teardrop
+    // Density: Cornell box scale usually wants smaller densities than your tiny -2..2 scene.
+    // Start around 0.02–0.06. Increase for thicker color.
+    let blue_smoke = constant_medium::from_color(
+        Arc::new(tear_left.clone()),
+        0.9,
+        &Color::new(0.2, 0.4, 0.9),
+    );
+    
+    world.add(Box::new(blue_smoke));
+
+    
+    // Right teardrop: metal (no smoke)
+    let tear_right = Metaballs::new(
+        vec![
+            Point3::new(370.0,  100.0, 280.0),
+            Point3::new(370.0, 200.0, 280.0),
+            Point3::new(370.0, 245.0, 280.0),
+        ],
+        vec![50.0, 20.0, 4.0],
+        0.4, // higher it is the more compact the ball
+        metal.clone(),
+    );
+    world.add(Box::new(tear_right));
+    
+
+    // Camera (Cornell-style)
+    let mut camera = Camera::new();
+    camera.aspect_ratio = 1.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 100; // volumes need samples; 200 is ok for preview
+    camera.max_depth = 30;          // glass + volume needs depth
+
+    camera.vfov = 40.0;
+    camera.look_from = Point3::new(278.0, 278.0, -800.0);
+    camera.look_at   = Point3::new(278.0, 278.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0;
+    camera.background_color = Color::new(0.0, 0.0, 0.0);
+
+    // BVH
+    let root = BVHNode::new(&world);
+    camera.render(&root);
+}
 
 
 fn main() {
-    let option = 0;
+    let option = 11;
 
     match option {
         1 => bouncing_spheres(),
@@ -488,6 +632,8 @@ fn main() {
         7 => conrell_box(),
         8 => cornell_smoke(),
         9 => final_scene(800, 10000, 40), // took over an hour
+        10 => metaballs(),
+        11 => cornell_teardrops(),
         _ => { eprintln!("running scene default\n");
             final_scene(400, 500, 10);} // ~ less than a minute
     }

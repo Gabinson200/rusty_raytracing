@@ -25,9 +25,9 @@ impl constant_medium {
         Self { boundary, neg_inv_density: -1.0 / density, phase_function: Arc::new(Isotropic::new(*albedo)) }
     }
 
-    //pub fn bounding_box(&self) -> AABB {
-    //    self.boundary.bounding_box()
-    //}
+    pub fn bounding_box(&self) -> AABB {
+        self.boundary.bounding_box()
+    }
 }
 
 impl Hittable for constant_medium {
