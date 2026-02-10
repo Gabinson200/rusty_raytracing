@@ -790,55 +790,65 @@ fn solar_system(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
     let sun_light = Arc::new(DiffuseLight::new(Color::new(255.0, 255.0, 94.0))); 
     world.add(Box::new(Sphere::new(Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::init_zero()), sun_radius, sun_light)));
 
+    
     // Helper closure to add planets
-    let mut add_planet = |world: &mut HittableList, dist_au: f64, radius_rel: f64, texture_path: &str| {
-        // Size: Sqrt(Relative) * Base
-        let radius = radius_rel.sqrt() * earth_radius_base * 2.0; // multiplied by 2 to make Earth planets more visible
+    let mut add_planet =
+        |world: &mut HittableList,
+        dist_au: f64,
+        radius_rel: f64,
+        texture_path: &str,
+        angle: Option<f64>| {
 
-        // Distance: Logarithmic scaling
-        // log10(0.39) is ~ -0.41. We shift this so Mercury starts at dist_base_offset.
-        // We add 0.41 to normalize Mercury to near-zero before scaling.
-        let log_au = dist_au.log10(); 
-        let distance = dist_base_offset + (log_au + 0.41) * dist_spread_factor;
+            // Size: Sqrt(Relative) * Base
+            let radius = radius_rel.sqrt() * earth_radius_base * 2.0;
 
-        // Helper debug print
-        let planet_name = texture_path.split('/').last().unwrap_or("unknown");
-        eprint!("Adding {}: AU={:.2} -> LogDist={:.1}, RelRad={:.2} -> VisRad={:.1}\n", 
-            planet_name, dist_au, distance, radius_rel, radius);
+            // Distance: Logarithmic scaling
+            let log_au = dist_au.log10();
+            let distance = dist_base_offset + (log_au + 0.41) * dist_spread_factor;
 
-        // Random orbital angle
-        //let angle = random_f64_range(0.0, 2.0 * std::f64::consts::PI);
-        //let x = distance * angle.cos();
-        //let z = distance * angle.sin();
+            // Helper debug print
+            let planet_name = texture_path.split('/').last().unwrap_or("unknown");
+            eprint!(
+                "Adding {}: AU={:.2} -> LogDist={:.1}, RelRad={:.2} -> VisRad={:.1}\n",
+                planet_name, dist_au, distance, radius_rel, radius
+            );
 
-        let angle_r = (radius / 2.0) % (2.0 * std::f64::consts::PI) - std::f64::consts::PI / 2.0; // use radius to get a consistent angle for each planet
-        eprintln!("Angle_r: {:.2}", angle_r);
-        let x = distance * angle_r.cos();
-        let z = distance * angle_r.sin();
+            // If caller provides an angle, use it. Otherwise keep deterministic one.
+            let angle_r = angle.unwrap_or_else(|| {
+                (radius / 2.0) % (2.0 * std::f64::consts::PI) - std::f64::consts::PI / 2.0
+            });
 
-        // lined up along x-axis for better visibility of textures and orbits
-        //let x = distance;
-        //let z: f64 = 0.0;
+            eprintln!("Angle_r: {:.2}", angle_r);
 
-        let pos = Point3::new(x, 0.0, z);
-        
-        let tex = Arc::new(ImageTexture::new(texture_path));
-        let mat = Arc::new(Lambertian::from_texture(tex));
-        
-        world.add(Box::new(Sphere::new(Ray::new(pos, Vec3::init_zero()), radius, mat)));
-    };
+            let x = distance * angle_r.cos();
+            let z = distance * angle_r.sin();
+
+            let pos = Point3::new(x, 0.0, z);
+
+            let tex = Arc::new(ImageTexture::new(texture_path));
+            let mat = Arc::new(DiffuseLight::from_texture(tex));
+            //let mat = Arc::new(Lambertian::from_texture(tex));
+
+
+            world.add(Box::new(Sphere::new(
+                Ray::new(pos, Vec3::init_zero()),
+                radius,
+                mat,
+            )));
+        };
+
 
     // Inner Planets
-    add_planet(&mut world, 0.39, 0.38, "textures/2k_mercury.jpg");       // Mercury
-    add_planet(&mut world, 0.72, 0.95, "textures/2k_venus_surface.jpg"); // Venus
-    add_planet(&mut world, 1.00, 1.00, "textures/earthmap.jpg");         // Earth
-    add_planet(&mut world, 1.52, 0.53, "textures/2k_mars.jpg");          // Mars
+    add_planet(&mut world, 0.39, 0.38, "textures/2k_mercury.jpg", Some(0.0));       // Mercury
+    add_planet(&mut world, 0.72, 0.95, "textures/2k_venus_surface.jpg", Some(0.25 * std::f64::consts::PI)); // Venus
+    add_planet(&mut world, 1.00, 1.00, "textures/earthmap.jpg", Some(3.0 * 0.25 * std::f64::consts::PI));         // Earth
+    add_planet(&mut world, 1.52, 0.53, "textures/2k_mars.jpg", Some(4.0  * 0.25 * std::f64::consts::PI));          // Mars
 
     // Outer Planets
-    add_planet(&mut world, 5.20, 11.2, "textures/2k_jupiter.jpg");       // Jupiter
-    add_planet(&mut world, 9.58, 9.45, "textures/2k_saturn.jpg");        // Saturn
-    add_planet(&mut world, 19.2, 4.00, "textures/2k_uranus.jpg");        // Uranus
-    add_planet(&mut world, 30.1, 3.88, "textures/2k_neptune.jpg");       // Neptune
+    add_planet(&mut world, 5.20, 11.2, "textures/2k_jupiter.jpg", Some(5.0 * 0.25 * std::f64::consts::PI));       // Jupiter
+    add_planet(&mut world, 9.58, 9.45, "textures/2k_saturn.jpg", Some(6.0 * 0.25 * std::f64::consts::PI));        // Saturn
+    add_planet(&mut world, 19.2, 4.00, "textures/2k_uranus.jpg", Some(7.0 * 0.25 * std::f64::consts::PI));        // Uranus
+    add_planet(&mut world, 30.1, 3.88, "textures/2k_neptune.jpg",Some(8.0 * 0.25 * std::f64::consts::PI));       // Neptune
 
     // Camera setup
     let mut camera = Camera::new();
@@ -850,13 +860,131 @@ fn solar_system(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
 
     // Position camera high up and back to see the entire orbital plane
     // With log scaling, Neptune is at ~185 units, Sun is at 0.
-    camera.vfov = 45.0;
+    camera.vfov = 30.0;
     camera.look_from = Point3::new(0.0, 200.0, 300.0); 
-    camera.look_at = Point3::new(0.0, 0.0, -1.0);      // Look slightly offset to center the orbits
+    camera.look_at = Point3::new(50.0, 0.0, -1.0);      // Look slightly offset to center the orbits
     camera.vup = Vec3::new(0.0, 1.0, 0.0);             // Y-up is standard for this scene
 
-    camera.background_color = Color::new(0.001, 0.001, 0.001); // Deep space grey/black
+    camera.background_color = Color::new(0.005, 0.005, 0.005); // Deep space grey/black
     camera.defocus_angle = 0.0; 
+
+    let root = BVHNode::new(&world);
+    camera.render(&root);
+}
+
+fn cornell_metal_heart_metaballs() {
+    // World
+    let mut world = HittableList::new();
+
+    // Cornell materials
+    let red   = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
+
+    // Light
+    let light = Arc::new(DiffuseLight::new(Color::new(15.0, 15.0, 15.0)));
+    world.add(Box::new(Quad::new(
+        Point3::new(213.0, 554.0, 227.0),
+        Vec3::new(130.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 105.0),
+        light,
+    )));
+
+    // Cornell box walls
+    world.add(Box::new(Quad::new(
+        Point3::new(555.0, 0.0,   0.0),
+        Vec3::new(0.0, 0.0, 555.0),
+        Vec3::new(0.0, 555.0, 0.0),
+        green,
+    ))); // left
+    world.add(Box::new(Quad::new(
+        Point3::new(0.0,   0.0, 555.0),
+        Vec3::new(0.0, 0.0,-555.0),
+        Vec3::new(0.0, 555.0, 0.0),
+        red,
+    ))); // right
+    world.add(Box::new(Quad::new(
+        Point3::new(0.0,   0.0,   0.0),
+        Vec3::new(555.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 555.0),
+        white.clone(),
+    ))); // floor
+    world.add(Box::new(Quad::new(
+        Point3::new(0.0, 555.0,   0.0),
+        Vec3::new(555.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 555.0),
+        white.clone(),
+    ))); // ceiling
+    world.add(Box::new(Quad::new(
+        Point3::new(0.0,   0.0, 555.0),
+        Vec3::new(555.0, 0.0, 0.0),
+        Vec3::new(0.0, 555.0, 0.0),
+        white.clone(),
+    ))); // back
+
+    // -----------------------------
+    // Metal heart (metaballs)
+    // -----------------------------
+    let heart_metal = Arc::new(Metal::new(Color::new(0.95, 0.20, 0.28), 0.02));
+
+    // Build the heart in LOCAL space around the origin (z=0 plane),
+    // then rotate + translate into the Cornell box.
+    //
+    // Think of it as 2 joined "teardrops" flipped vertically:
+    // big lobes on top, blending inward, tapering to a bottom point.
+    let centers = vec![
+        // top lobes
+        Point3::new(-85.0,  70.0, 0.0),
+        Point3::new( 85.0,  70.0, 0.0),
+
+        // upper-mid blends (pull the shape toward the center)
+        Point3::new(-35.0,  15.0, 0.0),
+        Point3::new( 35.0,  15.0, 0.0),
+
+        // lower-mid (start tapering)
+        Point3::new(-6.0, -40.0, 0.0),
+        Point3::new( 6.0, -40.0, 0.0),
+
+        // bottom point (two beads to sharpen the tip)
+        Point3::new(  0.0, -65.0, 0.0),
+        Point3::new(  0.0, -80.0, 0.0),
+    ];
+
+    let radii = vec![
+        75.0, 75.0,
+        45.0, 45.0,
+        20.0, 20.0,
+        10.0, 8.0,
+    ];
+
+    // Lower threshold => fatter / more merged. Higher => tighter / more separated.
+    let threshold = 1.8;
+
+    let heart = Metaballs::new(centers, radii, threshold, heart_metal);
+
+    // Give it a slight yaw so reflections read better
+    let heart = RotateY::new(Arc::new(heart), 12.0);
+
+    // Place it in the Cornell box.
+    // Tip sits a bit above the floor; centered-ish in x and mid-depth in z.
+    let heart = Translate::new(Arc::new(heart), Vec3::new(278.0, 260.0, 280.0));
+
+    world.add(Box::new(heart));
+
+    // Camera (Cornell-style)
+    let mut camera = Camera::new();
+    camera.aspect_ratio = 1.0;
+    camera.image_width = 400;
+    camera.samples_per_pixel = 500; // bump to 500+ for cleaner metal
+    camera.max_depth = 4;
+
+    camera.vfov = 40.0;
+    camera.look_from = Point3::new(278.0, 278.0, -800.0);
+    camera.look_at   = Point3::new(278.0, 278.0, 0.0);
+    camera.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    camera.defocus_angle = 0.0;
+    camera.background_color = Color::new(0.0, 0.0, 0.0);
 
     let root = BVHNode::new(&world);
     camera.render(&root);
@@ -864,7 +992,7 @@ fn solar_system(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
 
 
 fn main() {
-    let option = 13;
+    let option = 14;
 
     match option {
         1 => bouncing_spheres(),
@@ -879,7 +1007,8 @@ fn main() {
         10 => metaballs(),
         11 => cornell_teardrops(),
         12 => final_scene_rain_metaballs(800, 5000, 40), // 800, 5000, 40 ~2hours
-        13 => solar_system(1200, 2000, 100), // 800, 5000, 500 ~ 1 min / 2400, 20k, 1k ~2min
+        13 => solar_system(2400, 20000, 1000), // 800, 5000, 500 ~ 1 min / 2400, 20k, 1k ~2min
+        14 => cornell_metal_heart_metaballs(),
         _ => { eprintln!("running scene default\n");
             final_scene(400, 500, 10);} // ~ less than a minute
     }
