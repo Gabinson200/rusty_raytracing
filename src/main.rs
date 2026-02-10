@@ -922,17 +922,14 @@ fn cornell_metal_heart_metaballs() {
         white.clone(),
     ))); // back
 
+
     // -----------------------------
-    // Metal heart (metaballs)
+    // Metal hearts (metaballs) — multiple copies scattered
     // -----------------------------
     let heart_metal = Arc::new(Metal::new(Color::new(0.95, 0.20, 0.28), 0.02));
 
-    // Build the heart in LOCAL space around the origin (z=0 plane),
-    // then rotate + translate into the Cornell box.
-    //
-    // Think of it as 2 joined "teardrops" flipped vertically:
-    // big lobes on top, blending inward, tapering to a bottom point.
-    let centers = vec![
+    // DO NOT CHANGE THESE (centers + radii define the heart)
+    let heart_centers = vec![
         // top lobes
         Point3::new(-85.0,  70.0, 0.0),
         Point3::new( 85.0,  70.0, 0.0),
@@ -950,7 +947,7 @@ fn cornell_metal_heart_metaballs() {
         Point3::new(  0.0, -80.0, 0.0),
     ];
 
-    let radii = vec![
+    let heart_radii = vec![
         75.0, 75.0,
         45.0, 45.0,
         20.0, 20.0,
@@ -960,23 +957,49 @@ fn cornell_metal_heart_metaballs() {
     // Lower threshold => fatter / more merged. Higher => tighter / more separated.
     let threshold = 1.8;
 
-    let heart = Metaballs::new(centers, radii, threshold, heart_metal);
+    // Helper to instantiate the same heart many times (no changes to centers/radii)
+    let mut add_heart_instance =
+        |world: &mut HittableList, pos: Vec3, yaw_deg: f64, scale: f64| {
 
-    // Give it a slight yaw so reflections read better
-    let heart = RotateY::new(Arc::new(heart), 12.0);
+            // IMPORTANT: do not edit the base arrays; build scaled copies per instance
+            let centers_scaled: Vec<Point3> = heart_centers
+                .iter()
+                .copied()
+                .map(|c| c * scale)
+                .collect();
 
-    // Place it in the Cornell box.
-    // Tip sits a bit above the floor; centered-ish in x and mid-depth in z.
-    let heart = Translate::new(Arc::new(heart), Vec3::new(278.0, 260.0, 280.0));
+            let radii_scaled: Vec<f64> = heart_radii
+                .iter()
+                .copied()
+                .map(|r| r * scale)
+                .collect();
 
-    world.add(Box::new(heart));
+            let heart = Metaballs::new(
+                centers_scaled,
+                radii_scaled,
+                threshold,
+                heart_metal.clone(),
+            );
+
+            let heart = RotateY::new(Arc::new(heart), yaw_deg);
+            let heart = Translate::new(Arc::new(heart), pos);
+
+            world.add(Box::new(heart));
+        };
+
+
+    add_heart_instance(&mut world, Vec3::new(278.0, 260.0, 280.0),  0.0, 1.00);
+    add_heart_instance(&mut world, Vec3::new(160.0, 210.0, 200.0), -35.0, 0.50);
+    add_heart_instance(&mut world, Vec3::new(410.0, 210.0, 200.0),  35.0, 0.50);
+    add_heart_instance(&mut world, Vec3::new(278.0, 100.0, 120.0), 0.0, 0.30);
+
 
     // Camera (Cornell-style)
     let mut camera = Camera::new();
     camera.aspect_ratio = 1.0;
-    camera.image_width = 400;
-    camera.samples_per_pixel = 500; // bump to 500+ for cleaner metal
-    camera.max_depth = 4;
+    camera.image_width = 800;
+    camera.samples_per_pixel = 1000; // bump to 500+ for cleaner metal
+    camera.max_depth = 40;
 
     camera.vfov = 40.0;
     camera.look_from = Point3::new(278.0, 278.0, -800.0);
